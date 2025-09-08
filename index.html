@@ -44,11 +44,8 @@
             </div>
             
             <nav class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#demo">Demo</a>
-                <a href="#about">Über uns</a>
-                <a href="html/admin.html" class="btn btn-primary">Admin Panel</a>
-                <a href="html/join.html" class="btn btn-secondary">Quiz beitreten</a>
+                <a href="html/join.html" class="btn btn-primary">Quiz beitreten</a>
+                <a href="html/admin.html" class="btn btn-secondary">Quiz erstellen</a>
                 <button id="theme-toggle" class="theme-toggle" aria-label="Theme wechseln">
                     <i class="fas fa-moon"></i>
                 </button>
@@ -61,19 +58,28 @@
         <div class="container">
             <div class="hero-content">
                 <h1 class="hero-title">
-                    🧠 Interaktive Quiz-Plattform
-                    <span class="gradient-text">für Echtzeit-Sessions</span>
+                    🧠 <span class="gradient-text">QuizMaster</span>
+                    <br>Interaktive Quiz-Plattform
                 </h1>
                 <p class="hero-description">
-                    Erstellen, verwalten und führen Sie professionelle Quiz-Sessions durch. 
-                    Mit Live-Steuerung, Echtzeit-Scoreboard und globalem Timer für maximale Interaktivität.
+                    Treten Sie Live-Quiz-Sessions bei oder werden Sie Quiz-Master und erstellen Sie eigene interaktive Quiz mit Echtzeit-Features.
                 </p>
-                <div class="hero-actions">
-                    <a href="html/admin.html" class="btn btn-primary btn-large">
-                        <i class="fas fa-plus"></i> Quiz erstellen
+                
+                <!-- Primary Action - Join Quiz -->
+                <div class="primary-action">
+                    <h2 class="action-title">🎯 Quiz beitreten</h2>
+                    <p class="action-description">Haben Sie einen Quiz-Code? Treten Sie sofort bei!</p>
+                    <a href="html/join.html" class="btn btn-primary btn-hero">
+                        <i class="fas fa-play"></i> Jetzt mitmachen
                     </a>
-                    <a href="html/join.html" class="btn btn-outline btn-large">
-                        <i class="fas fa-users"></i> Quiz beitreten
+                </div>
+                
+                <!-- Secondary Action - Become Quiz Master -->
+                <div class="secondary-action">
+                    <h3 class="action-subtitle">📋 Quiz-Master werden</h3>
+                    <p class="action-sub-description">Erstellen Sie eigene Quiz-Sessions mit Live-Steuerung</p>
+                    <a href="html/admin.html" class="btn btn-secondary btn-medium">
+                        <i class="fas fa-crown"></i> Quiz erstellen
                     </a>
                 </div>
             </div>
@@ -96,147 +102,13 @@
                     <div class="live-stats">
                         <div class="stat">
                             <i class="fas fa-users"></i>
-                            <span>24 Teilnehmer</span>
+                            <span>Live teilnehmen</span>
                         </div>
                         <div class="stat">
                             <i class="fas fa-trophy"></i>
-                            <span>Live Scoreboard</span>
+                            <span>Echtzeit-Scoreboard</span>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="features">
-        <div class="container">
-            <h2 class="section-title">✨ Hauptfunktionen</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-broadcast-tower"></i>
-                    </div>
-                    <h3>🔴 Live-Quiz-Sessions</h3>
-                    <p>Echtzeit-Quiz-Durchführung mit WebSocket-Integration. Steuern Sie Fragen, Timer und Teilnehmer live.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <h3>📊 Live Scoreboard</h3>
-                    <p>Echtzeitaktualisiertes Leaderboard mit Punkteständen, Zeitboni und Teilnehmer-Rankings.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h3>⏱️ Globaler Timer</h3>
-                    <p>Zentral gesteuerte Timer für alle Teilnehmer mit Pause-, Skip- und Zeitanpassung.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-cog"></i>
-                    </div>
-                    <h3>🔧 Quiz-Steuerung</h3>
-                    <p>Vollständige Kontrolle über Quiz-Sessions: Starten, pausieren, Fragen überspringen.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3>👥 Teilnehmerverwaltung</h3>
-                    <p>Einfaches Hinzufügen und Verwalten von Quiz-Teilnehmern mit Live-Monitoring.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h3>📱 Responsive Design</h3>
-                    <p>Optimiert für alle Geräte und Bildschirmgrößen - Desktop, Tablet und Mobile.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Demo Section -->
-    <section id="demo" class="demo">
-        <div class="container">
-            <h2 class="section-title">🚀 Live Demo</h2>
-            <div class="demo-content">
-                <div class="demo-text">
-                    <h3>Probieren Sie QuizMaster direkt aus!</h3>
-                    <p>Testen Sie alle Features unserer Quiz-Plattform:</p>
-                    <ul class="demo-features">
-                        <li><i class="fas fa-check"></i> Admin Panel für Quiz-Erstellung</li>
-                        <li><i class="fas fa-check"></i> Live-Steuerung von Quiz-Sessions</li>
-                        <li><i class="fas fa-check"></i> Teilnehmer-Experience testen</li>
-                        <li><i class="fas fa-check"></i> Theme System (Light/Dark Mode)</li>
-                    </ul>
-                </div>
-                <div class="demo-actions">
-                    <a href="html/admin.html" class="btn btn-primary btn-large">
-                        <i class="fas fa-cogs"></i> Admin Demo
-                    </a>
-                    <a href="html/join.html" class="btn btn-outline btn-large">
-                        <i class="fas fa-play"></i> Quiz Demo
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Stats Section -->
-    <section class="stats">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-number" data-target="100">0</div>
-                    <div class="stat-label">Quiz erstellt</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" data-target="1000">0</div>
-                    <div class="stat-label">Teilnehmer</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" data-target="50">0</div>
-                    <div class="stat-label">Live-Sessions</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" data-target="99">0</div>
-                    <div class="stat-label">% Zufriedenheit</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section id="about" class="about">
-        <div class="container">
-            <h2 class="section-title">Über QuizMaster</h2>
-            <div class="about-content">
-                <div class="about-text">
-                    <h3>Eine moderne Quiz-Plattform für den deutschen Sprachraum</h3>
-                    <p>
-                        QuizMaster ist eine vollständig funktionsfähige, interaktive Quiz-Plattform, 
-                        die es Benutzern ermöglicht, Quiz zu erstellen, zu verwalten und in Echtzeit 
-                        durchzuführen. Mit einem eleganten deutschen Interface, umfassendem Theme-System 
-                        und professioneller Architektur bietet die Plattform eine erstklassige Benutzererfahrung.
-                    </p>
-                    
-                    <h4>🛠 Technische Features</h4>
-                    <ul>
-                        <li>WebSocket-basierte Echtzeitkommunikation</li>
-                        <li>Progressive Web App Architektur</li>
-                        <li>Offline-first mit LocalStorage Fallback</li>
-                        <li>Responsive Design für alle Geräte</li>
-                        <li>Theme-System mit automatischer Erkennung</li>
-                    </ul>
                 </div>
             </div>
         </div>
@@ -246,46 +118,15 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
-                <div class="footer-section">
+                <div class="footer-main">
                     <h3><i class="fas fa-brain"></i> QuizMaster</h3>
-                    <p>Die moderne Quiz-Plattform für interaktive Echtzeit-Sessions.</p>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="html/admin.html">Admin Panel</a></li>
-                        <li><a href="html/join.html">Quiz beitreten</a></li>
-                        <li><a href="tests/">Tests</a></li>
-                        <li><a href="docs/">Dokumentation</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>Features</h4>
-                    <ul>
-                        <li>Live-Quiz-Sessions</li>
-                        <li>Echtzeit-Scoreboard</li>
-                        <li>Timer-Steuerung</li>
-                        <li>Teilnehmerverwaltung</li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>Technisch</h4>
-                    <ul>
-                        <li>WebSocket Real-time</li>
-                        <li>Progressive Web App</li>
-                        <li>Mobile-optimiert</li>
-                        <li>Offline-Support</li>
-                    </ul>
+                    <p>Interaktive Quiz-Plattform für Live-Sessions mit Echtzeit-Features.</p>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2024 QuizMaster. Entwickelt mit ❤️ für die deutsche Quiz-Community.</p>
+                <p>&copy; 2024 QuizMaster. Made with ❤️ by <a href="https://github.com/piosteiner" target="_blank" rel="noopener">@piosteiner</a></p>
                 <div class="footer-theme">
-                    <span>Theme: </span>
                     <button id="footer-theme-toggle" class="theme-toggle-small">
                         <i class="fas fa-adjust"></i>
                     </button>
