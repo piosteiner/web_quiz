@@ -68,10 +68,8 @@ class QuizMasterServer {
         // Rate limiting
         this.app.use('/api/', rateLimiter);
         
-        // Static files - serve from public directory in production, root in development
-        const staticPath = process.env.NODE_ENV === 'production' 
-            ? path.join(__dirname, '../public')
-            : path.join(__dirname, '../');
+        // Static files - serve from project root
+        const staticPath = path.join(__dirname, '../../');  // Up two levels to project root
         
         this.app.use(express.static(staticPath, {
             maxAge: process.env.NODE_ENV === 'production' ? '1y' : '0',
@@ -96,24 +94,24 @@ class QuizMasterServer {
         // Serve main application
         this.app.get('/', (req, res) => {
             const indexPath = process.env.NODE_ENV === 'production' 
-                ? path.join(__dirname, '../public/index.html')
-                : path.join(__dirname, '../index.html');
+                ? path.join(__dirname, '../../index.html')  // Root level of project
+                : path.join(__dirname, '../../index.html');  // Same for development
             res.sendFile(indexPath);
         });
 
         // Explicitly serve admin pages
         this.app.get('/html/admin.html', (req, res) => {
-            const adminPath = path.join(__dirname, '../public/html/admin.html');
+            const adminPath = path.join(__dirname, '../../html/admin.html');
             res.sendFile(adminPath);
         });
 
         this.app.get('/html/join.html', (req, res) => {
-            const joinPath = path.join(__dirname, '../public/html/join.html');
+            const joinPath = path.join(__dirname, '../../html/join.html');
             res.sendFile(joinPath);
         });
 
         this.app.get('/html/live-control.html', (req, res) => {
-            const livePath = path.join(__dirname, '../public/html/live-control.html');
+            const livePath = path.join(__dirname, '../../html/live-control.html');
             res.sendFile(livePath);
         });
 
