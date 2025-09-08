@@ -14,10 +14,9 @@ PURPLE='\033[0;35m'
 NC='\033[0m'
 
 # Configuration
-REPO_DIR="/var/www/quiz-platform/frontend"
-FRONTEND_DIR="/var/www/quiz-platform/frontend"
+REPO_DIR="/var/www/quiz-platform"
+FRONTEND_DIR="/var/www/quiz-platform"
 BACKEND_DIR="/var/www/quiz-platform/backend"
-PUBLIC_DIR="$BACKEND_DIR/public"
 BRANCH="main"
 
 # Logging
@@ -97,12 +96,12 @@ show_status() {
     git log --oneline -5
     echo ""
     
-    if [ -d "$PUBLIC_DIR" ]; then
+    if [ -d "$BACKEND_DIR" ]; then
         log "Backend Integration:"
-        echo "✅ Frontend synced to: $PUBLIC_DIR"
-        echo "📁 Files: $(find $PUBLIC_DIR -type f | wc -l)"
+        echo "✅ Backend located at: $BACKEND_DIR"
+        echo "📁 Files: $(find $BACKEND_DIR -type f | wc -l)"
     else
-        warning "Frontend not synced to backend"
+        warning "Backend directory not found"
     fi
 }
 
