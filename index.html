@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuizMaster - Interaktive Quiz-Plattform</title>
-    <meta name="description" content="Eine moderne, responsive Quiz-Plattform mit Echtzeit-Funktionen für den deutschen Sprachraum">
+    <title>PiGi Quiz - Interaktive Quiz-Plattform</title>
+    <meta name="description" content="PiGi Quiz - Moderne Quiz-Plattform für Live-Sessions mit Echtzeit-Features">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -21,7 +21,7 @@
     <!-- iOS PWA Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="QuizMaster">
+    <meta name="apple-mobile-web-app-title" content="PiGi Quiz">
     <link rel="apple-touch-icon" href="css/icons/apple-touch-icon.png">
     
     <!-- Theme Colors -->
@@ -30,22 +30,20 @@
     <meta name="msapplication-TileImage" content="css/icons/icon-144x144.png">
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="QuizMaster - Interaktive Quiz-Plattform">
-    <meta property="og:description" content="Erstellen und durchführen Sie interaktive Quiz in Echtzeit">
+    <meta property="og:title" content="PiGi Quiz - Interaktive Quiz-Plattform">
+    <meta property="og:description" content="Treten Sie Live-Quiz-Sessions bei oder erstellen Sie eigene interaktive Quiz">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://your-domain.com">
+    <meta property="og:url" content="https://quiz.piogino.ch">
 </head>
 <body>
     <!-- Header -->
     <header class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <h1><i class="fas fa-brain"></i> QuizMaster</h1>
+                <h1><i class="fas fa-brain"></i> PiGi Quiz</h1>
             </div>
             
             <nav class="nav-links">
-                <a href="html/join.html" class="btn btn-primary">Quiz beitreten</a>
-                <a href="html/admin.html" class="btn btn-secondary">Quiz erstellen</a>
                 <button id="theme-toggle" class="theme-toggle" aria-label="Theme wechseln">
                     <i class="fas fa-moon"></i>
                 </button>
@@ -58,11 +56,10 @@
         <div class="container">
             <div class="hero-content">
                 <h1 class="hero-title">
-                    🧠 <span class="gradient-text">QuizMaster</span>
-                    <br>Interaktive Quiz-Plattform
+                    🧠 <span class="gradient-text">PiGi Quiz</span>
                 </h1>
                 <p class="hero-description">
-                    Treten Sie Live-Quiz-Sessions bei oder werden Sie Quiz-Master und erstellen Sie eigene interaktive Quiz mit Echtzeit-Features.
+                    Einfache und interaktive Quiz-Plattform für Live-Sessions.
                 </p>
                 
                 <!-- Primary Action - Join Quiz -->
@@ -74,12 +71,12 @@
                     </a>
                 </div>
                 
-                <!-- Secondary Action - Become Quiz Master -->
+                <!-- Secondary Action - Create Quiz -->
                 <div class="secondary-action">
-                    <h3 class="action-subtitle">📋 Quiz-Master werden</h3>
-                    <p class="action-sub-description">Erstellen Sie eigene Quiz-Sessions mit Live-Steuerung</p>
+                    <h3 class="action-subtitle">📋 Quiz erstellen</h3>
+                    <p class="action-sub-description">Erstellen Sie eigene Quiz-Sessions</p>
                     <a href="html/admin.html" class="btn btn-secondary btn-medium">
-                        <i class="fas fa-crown"></i> Quiz erstellen
+                        <i class="fas fa-plus"></i> Quiz erstellen
                     </a>
                 </div>
             </div>
@@ -88,25 +85,25 @@
                 <div class="quiz-preview">
                     <div class="quiz-screen">
                         <div class="question-header">
-                            <span class="question-number">Frage 1/10</span>
+                            <span class="question-number">Frage 1/5</span>
                             <span class="timer">00:30</span>
                         </div>
-                        <h3>Was ist die Hauptstadt von Deutschland?</h3>
+                        <h3>Wie heißt die Hauptstadt der Schweiz?</h3>
                         <div class="answer-options">
-                            <div class="answer">A. München</div>
-                            <div class="answer correct">B. Berlin</div>
-                            <div class="answer">C. Hamburg</div>
-                            <div class="answer">D. Köln</div>
+                            <div class="answer">A. Zürich</div>
+                            <div class="answer correct">B. Bern</div>
+                            <div class="answer">C. Basel</div>
+                            <div class="answer">D. Genf</div>
                         </div>
                     </div>
                     <div class="live-stats">
                         <div class="stat">
                             <i class="fas fa-users"></i>
-                            <span>Live teilnehmen</span>
+                            <span>Live-Quiz</span>
                         </div>
                         <div class="stat">
                             <i class="fas fa-trophy"></i>
-                            <span>Echtzeit-Scoreboard</span>
+                            <span>Echtzeit</span>
                         </div>
                     </div>
                 </div>
@@ -119,13 +116,13 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-main">
-                    <h3><i class="fas fa-brain"></i> QuizMaster</h3>
-                    <p>Interaktive Quiz-Plattform für Live-Sessions mit Echtzeit-Features.</p>
+                    <h3><i class="fas fa-brain"></i> PiGi Quiz</h3>
+                    <p>Einfache Quiz-Plattform für Live-Sessions.</p>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2024 QuizMaster. Made with ❤️ by <a href="https://github.com/piosteiner" target="_blank" rel="noopener">@piosteiner</a></p>
+                <p>&copy; 2024 PiGi Quiz. Made with ❤️ by <a href="https://github.com/piosteiner" target="_blank" rel="noopener">@piosteiner</a></p>
                 <div class="footer-theme">
                     <button id="footer-theme-toggle" class="theme-toggle-small">
                         <i class="fas fa-adjust"></i>
