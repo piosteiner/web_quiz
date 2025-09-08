@@ -49,7 +49,9 @@ class RealTimeService {
             }
 
             const script = document.createElement('script');
-            script.src = '/socket.io/socket.io.js';
+            // Load Socket.IO from the backend server
+            const backendUrl = CONFIG.WEBSOCKET_URL.replace('wss://', 'https://').replace('ws://', 'http://');
+            script.src = `${backendUrl}/socket.io/socket.io.js`;
             script.onload = resolve;
             script.onerror = reject;
             document.head.appendChild(script);
