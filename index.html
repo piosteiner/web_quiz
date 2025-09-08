@@ -10,13 +10,10 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/spa.css">
     
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
     
     <!-- iOS PWA Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -28,114 +25,299 @@
     <meta name="theme-color" content="#6c5ce7">
     <meta name="msapplication-TileColor" content="#6c5ce7">
     <meta name="msapplication-TileImage" content="css/icons/icon-144x144.png">
-    
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="PiGi Quiz - Interaktive Quiz-Plattform">
-    <meta property="og:description" content="Treten Sie Live-Quiz-Sessions bei oder erstellen Sie eigene interaktive Quiz">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://quiz.piogino.ch">
 </head>
 <body>
-    <!-- Header -->
-    <header class="navbar">
-        <div class="container">
-            <div class="nav-brand">
-                <h1><i class="fas fa-brain"></i> PiGi Quiz</h1>
+    <!-- Navigation Bar -->
+    <nav class="navbar" id="main-navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <h1>PiGi Quiz</h1>
             </div>
             
-            <nav class="nav-links">
-                <button id="theme-toggle" class="theme-toggle" aria-label="Theme wechseln">
+            <!-- Navigation Menu -->
+            <div class="navbar-menu" id="navbar-menu">
+                <a href="#home" class="nav-link active" data-route="home">
+                    <i class="fas fa-home"></i> Start
+                </a>
+                <a href="#join" class="nav-link" data-route="join">
+                    <i class="fas fa-users"></i> Quiz beitreten
+                </a>
+                <a href="#admin" class="nav-link" data-route="admin">
+                    <i class="fas fa-cog"></i> Quiz erstellen
+                </a>
+                <a href="#live" class="nav-link" data-route="live" style="display: none;">
+                    <i class="fas fa-broadcast-tower"></i> Live Control
+                </a>
+            </div>
+            
+            <!-- Theme Toggle -->
+            <div class="navbar-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Theme umschalten">
                     <i class="fas fa-moon"></i>
                 </button>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h1 class="hero-title">
-                    🧠 <span class="gradient-text">PiGi Quiz</span>
-                </h1>
-                <p class="hero-description">
-                    Einfache und interaktive Quiz-Plattform für Live-Sessions.
-                </p>
-                
-                <!-- Primary Action - Join Quiz -->
-                <div class="primary-action">
-                    <h2 class="action-title">🎯 Quiz beitreten</h2>
-                    <p class="action-description">Haben Sie einen Quiz-Code? Treten Sie sofort bei!</p>
-                    <a href="html/join.html" class="btn btn-primary btn-hero">
-                        <i class="fas fa-play"></i> Jetzt mitmachen
-                    </a>
-                </div>
-                
-                <!-- Secondary Action - Create Quiz -->
-                <div class="secondary-action">
-                    <h3 class="action-subtitle">📋 Quiz erstellen</h3>
-                    <p class="action-sub-description">Erstellen Sie eigene Quiz-Sessions</p>
-                    <a href="html/admin.html" class="btn btn-secondary btn-medium">
-                        <i class="fas fa-plus"></i> Quiz erstellen
-                    </a>
-                </div>
             </div>
-            
-            <div class="hero-visual">
-                <div class="quiz-preview">
-                    <div class="quiz-screen">
-                        <div class="question-header">
-                            <span class="question-number">Frage 1/5</span>
-                            <span class="timer">00:15</span>
-                        </div>
-                        <h3>Wie heißt die Hauptstadt der Schweiz?</h3>
-                        <div class="answer-options">
-                            <div class="answer">A. Zürich</div>
-                            <div class="answer correct">B. Bern</div>
-                            <div class="answer">C. Basel</div>
-                            <div class="answer">D. Genf</div>
-                        </div>
-                    </div>
-                    <div class="live-stats">
-                        <div class="stat">
+        </div>
+    </nav>
+
+    <!-- Main Application Container -->
+    <main id="app-container">
+        
+        <!-- Home/Landing Page -->
+        <section id="home-view" class="app-view active">
+            <div class="hero-section">
+                <div class="hero-content">
+                    <h1 class="hero-title">PiGi Quiz</h1>
+                    <p class="hero-description">Interaktive Quiz-Plattform für Live-Sessions</p>
+                    
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-large" data-navigate="join">
                             <i class="fas fa-users"></i>
-                            <span>Live-Quiz</span>
+                            Quiz beitreten
+                        </button>
+                        <button class="btn btn-secondary btn-large" data-navigate="admin">
+                            <i class="fas fa-plus"></i>
+                            Quiz erstellen
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quiz Preview -->
+                <div class="quiz-preview">
+                    <div class="quiz-card">
+                        <div class="question-header">
+                            <span class="question-number">Frage 1/10</span>
+                            <span class="timer">00:30</span>
                         </div>
-                        <div class="stat">
-                            <i class="fas fa-trophy"></i>
-                            <span>Echtzeit</span>
+                        <h3 class="question-text">Welche Stadt ist die Hauptstadt der Schweiz?</h3>
+                        <div class="answer-options-preview">
+                            <div class="answer-option">A) Zürich</div>
+                            <div class="answer-option correct">B) Bern</div>
+                            <div class="answer-option">C) Basel</div>
+                            <div class="answer-option">D) Genf</div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-main">
-                    <h3><i class="fas fa-brain"></i> PiGi Quiz</h3>
-                    <p>Einfache Quiz-Plattform für Live-Sessions.</p>
+        <!-- Join Quiz View -->
+        <section id="join-view" class="app-view">
+            <div class="container">
+                <h2><i class="fas fa-users"></i> Quiz beitreten</h2>
+                
+                <!-- Join Form -->
+                <div class="join-section">
+                    <form id="join-form" class="join-form">
+                        <div class="form-group">
+                            <label for="participant-name">Dein Name</label>
+                            <input type="text" id="participant-name" name="participantName" 
+                                   placeholder="Gib deinen Namen ein" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quiz-name">Quiz Name</label>
+                            <input type="text" id="quiz-name" name="quizName" 
+                                   placeholder="Quiz Name eingeben" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-large">
+                            <i class="fas fa-sign-in-alt"></i> Beitreten
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Quiz Session Screens -->
+                <div id="quiz-session" style="display: none;">
+                    <!-- Waiting Screen -->
+                    <div id="waiting-screen" class="quiz-screen">
+                        <div class="waiting-content">
+                            <h3>Warten auf Quiz-Start...</h3>
+                            <p>Quiz: <span id="waiting-quiz-title"></span></p>
+                            <p>Teilnehmer: <span id="participant-counter">1</span></p>
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+
+                    <!-- Active Quiz Screen -->
+                    <div id="quiz-screen" class="quiz-screen" style="display: none;">
+                        <div class="quiz-header">
+                            <div class="quiz-info">
+                                <h3 id="quiz-title">Quiz Titel</h3>
+                                <span class="question-counter">
+                                    Frage <span id="question-number">1</span> von <span id="total-questions">10</span>
+                                </span>
+                            </div>
+                            <div class="quiz-timer">
+                                <div class="timer-circle">
+                                    <span id="timer-countdown">30</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="question-container">
+                            <h2 id="question-text">Frage wird geladen...</h2>
+                            <div id="answer-options" class="answer-options">
+                                <!-- Answer options will be populated by JavaScript -->
+                            </div>
+                            <div id="answer-feedback" class="answer-feedback" style="display: none;"></div>
+                        </div>
+                        
+                        <div class="quiz-footer">
+                            <div class="score-display">
+                                Punkte: <span id="current-score">0</span>
+                            </div>
+                            <button id="leave-session-btn" class="btn btn-outline">
+                                <i class="fas fa-sign-out-alt"></i> Verlassen
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Results Screen -->
+                    <div id="results-screen" class="quiz-screen" style="display: none;">
+                        <div class="results-header">
+                            <h2>Quiz beendet!</h2>
+                            <div class="final-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value" id="final-score">0</span>
+                                    <span class="stat-label">Punkte</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="final-rank">#-</span>
+                                    <span class="stat-label">Platz</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="correct-answers">0</span>
+                                    <span class="stat-label">Richtig</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="average-time">-</span>
+                                    <span class="stat-label">Ø Zeit</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="leaderboard-section">
+                            <h3>Bestenliste</h3>
+                            <div id="final-leaderboard" class="leaderboard">
+                                <!-- Leaderboard will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="results-actions">
+                            <button id="play-again-btn" class="btn btn-primary">
+                                <i class="fas fa-redo"></i> Nochmal spielen
+                            </button>
+                            <button id="share-results-btn" class="btn btn-secondary">
+                                <i class="fas fa-share"></i> Ergebnis teilen
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2024 PiGi Quiz. Made with ❤️ by <a href="https://github.com/piosteiner" target="_blank" rel="noopener">@piosteiner</a></p>
-                <div class="footer-theme">
-                    <button id="footer-theme-toggle" class="theme-toggle-small">
-                        <i class="fas fa-adjust"></i>
-                    </button>
+        </section>
+
+        <!-- Admin View -->
+        <section id="admin-view" class="app-view">
+            <div class="container">
+                <h2><i class="fas fa-cog"></i> Quiz Administration</h2>
+                
+                <!-- Login Section -->
+                <div id="login-section" class="auth-section">
+                    <div class="auth-tabs">
+                        <button class="auth-tab active" data-tab="login">Anmelden</button>
+                        <button class="auth-tab" data-tab="register">Registrieren</button>
+                    </div>
+                    
+                    <form id="login-form" class="auth-form active">
+                        <div class="form-group">
+                            <label for="login-email">E-Mail</label>
+                            <input type="email" id="login-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Passwort</label>
+                            <input type="password" id="login-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large">Anmelden</button>
+                    </form>
+                    
+                    <form id="register-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="register-name">Name</label>
+                            <input type="text" id="register-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">E-Mail</label>
+                            <input type="email" id="register-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Passwort</label>
+                            <input type="password" id="register-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Passwort bestätigen</label>
+                            <input type="password" id="confirm-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large">Registrieren</button>
+                    </form>
+                </div>
+
+                <!-- Admin Dashboard -->
+                <div id="admin-dashboard" class="admin-section" style="display: none;">
+                    <div class="dashboard-header">
+                        <div class="user-info">
+                            <span>Willkommen, <span id="user-name">Admin</span></span>
+                            <button id="logout-btn" class="btn btn-outline">
+                                <i class="fas fa-sign-out-alt"></i> Abmelden
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-content">
+                        <!-- Quiz List -->
+                        <div class="quiz-management">
+                            <div class="section-header">
+                                <h3>Deine Quiz</h3>
+                                <button id="create-quiz-btn" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Neues Quiz
+                                </button>
+                            </div>
+                            <div id="quiz-list" class="quiz-list">
+                                <!-- Quiz items will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </footer>
+        </section>
 
-    <!-- Scripts -->
-    <script src="js/main.js"></script>
-    
-    <!-- PWA Enhancement Script -->
+        <!-- Live Control View -->
+        <section id="live-view" class="app-view">
+            <div class="container">
+                <h2><i class="fas fa-broadcast-tower"></i> Live Quiz Control</h2>
+                <div id="live-control-content">
+                    <!-- Live control content will be loaded dynamically -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Wird geladen...</p>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- Connection Status -->
+    <div id="connection-indicator" class="connection-indicator">
+        <i class="fas fa-wifi"></i>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script type="module" src="js/app.js"></script>
     <script type="module" src="js/pwa.js"></script>
 </body>
 </html>

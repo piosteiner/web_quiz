@@ -133,19 +133,24 @@ class QuizMasterServer {
             }
             
             const indexPath = process.env.NODE_ENV === 'production' 
-                ? path.join(__dirname, '../public/index.html')
-                : path.join(__dirname, '../index.html');
+                ? path.join(__dirname, '../../app.html')
+                : path.join(__dirname, '../../app.html');
             res.sendFile(indexPath);
         });
         
-        // Serve admin panel
+        // Serve admin panel (redirect to SPA)
         this.app.get('/admin', (req, res) => {
-            res.sendFile(path.join(__dirname, '../html/admin.html'));
+            res.redirect('/#admin');
         });
         
-        // Serve join page
+        // Serve join page (redirect to SPA)
         this.app.get('/join', (req, res) => {
-            res.sendFile(path.join(__dirname, '../html/join.html'));
+            res.redirect('/#join');
+        });
+        
+        // Serve live control (redirect to SPA)
+        this.app.get('/live', (req, res) => {
+            res.redirect('/#live');
         });
         
         // API documentation
