@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz beitreten - Quiz Tool</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/join.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <button id="theme-toggle" class="theme-toggle floating-theme-toggle">🌙 Dunkler Modus</button>
+    
+    <div class="join-container">
+        <!-- Join Form Screen -->
+        <div id="join-screen" class="screen active">
+            <div class="join-card">
+                <div class="join-header">
+                    <h1>Quiz beitreten</h1>
+                    <p>Geben Sie Ihren Namen und den Quiz-Namen ein</p>
+                </div>
+                
+                <form id="join-form" class="join-form">
+                    <div class="form-group">
+                        <label for="participant-name">Ihr Name:</label>
+                        <input type="text" id="participant-name" placeholder="Max Mustermann" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="quiz-name">Quiz-Name:</label>
+                        <input type="text" id="quiz-name" placeholder="mathe-test-2024" required>
+                        <small class="help-text">Quiz-Name vom Moderator erhalten</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-large">
+                        <i class="fas fa-sign-in-alt"></i> Quiz beitreten
+                    </button>
+                </form>
+                
+                <div class="join-info">
+                    <p><i class="fas fa-info-circle"></i> Den Quiz-Namen erhalten Sie vom Quiz-Moderator</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Waiting Screen -->
+        <div id="waiting-screen" class="screen">
+            <div class="waiting-card">
+                <div class="waiting-header">
+                    <h1 id="waiting-quiz-title">Warten auf Quiz-Start...</h1>
+                    <p id="waiting-message">Sie sind erfolgreich beigetreten!</p>
+                </div>
+                
+                <div class="waiting-content">
+                    <div class="waiting-animation">
+                        <div class="pulse-animation">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="session-info">
+                        <div class="info-item">
+                            <label>Ihr Name:</label>
+                            <span id="display-name"></span>
+                        </div>
+                        <div class="info-item">
+                            <label>Teilnehmer:</label>
+                            <span id="participant-counter">1</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Status:</label>
+                            <span id="session-status-display" class="badge badge-waiting">Wartend</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="leave-session-btn" class="btn btn-outline">
+                    <i class="fas fa-sign-out-alt"></i> Session verlassen
+                </button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen">
+            <div class="quiz-header">
+                <div class="quiz-info">
+                    <h1 id="quiz-title"></h1>
+                    <div class="quiz-progress">
+                        <span id="question-number">1</span> / <span id="total-questions">10</span>
+                    </div>
+                </div>
+                <div class="timer-container">
+                    <div class="timer-circle">
+                        <span id="timer-countdown">30</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="question-container">
+                <div id="question-content">
+                    <h2 id="question-text"></h2>
+                    <div id="answer-options" class="answer-options">
+                        <!-- Antwortoptionen werden hier eingefügt -->
+                    </div>
+                </div>
+                
+                <div class="question-footer">
+                    <div class="score-display">
+                        Punkte: <span id="current-score">0</span>
+                    </div>
+                    <div class="answer-feedback" id="answer-feedback" style="display: none;">
+                        <!-- Feedback wird hier angezeigt -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="screen">
+            <div class="results-card">
+                <div class="results-header">
+                    <h1>Quiz beendet!</h1>
+                    <div class="final-score">
+                        <div class="score-circle">
+                            <span id="final-score">0</span>
+                            <small>Punkte</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="results-content">
+                    <div class="personal-stats">
+                        <h3>Ihre Ergebnisse</h3>
+                        <div class="stat-grid">
+                            <div class="stat-item">
+                                <label>Richtige Antworten:</label>
+                                <span id="correct-answers">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>Falsche Antworten:</label>
+                                <span id="incorrect-answers">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>Platzierung:</label>
+                                <span id="final-rank">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>Durchschnittliche Zeit:</label>
+                                <span id="average-time">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="leaderboard-section">
+                        <h3>Bestenliste</h3>
+                        <div id="final-leaderboard">
+                            <!-- Bestenliste wird hier eingefügt -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="results-actions">
+                    <button id="play-again-btn" class="btn btn-primary">
+                        <i class="fas fa-redo"></i> Nochmal spielen
+                    </button>
+                    <button id="share-results-btn" class="btn btn-outline">
+                        <i class="fas fa-share"></i> Ergebnis teilen
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="connection-indicator" id="connection-indicator">
+            <i class="fas fa-wifi"></i>
+        </div>
+
+        <!-- Notification Container -->
+        <div id="notification-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="../js/main.js"></script>
+    <script type="module" src="../js/config.js"></script>
+    <script type="module" src="../js/cloud-api.js"></script>
+    <script type="module" src="../js/realtime.js"></script>
+    <script type="module" src="../js/join.js"></script>
+</body>
+</html>
