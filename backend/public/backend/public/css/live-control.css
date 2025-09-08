@@ -1,0 +1,466 @@
+/* Live Control Specific Styles */
+
+/* Inherit all theme variables from styles.css */
+:root {
+    --surface: var(--card-bg);
+    --background: var(--bg-primary);
+    --border: var(--border-color);
+}
+
+.live-control-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--background);
+    color: var(--text-primary);
+}
+
+/* Header */
+.live-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.session-info h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+}
+
+.session-id {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.session-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Main Content Layout */
+.live-content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 300px 1fr 300px;
+    gap: 1rem;
+    padding: 1rem;
+    overflow: hidden;
+}
+
+/* Panel Styles */
+.left-panel,
+.center-panel,
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+}
+
+/* Card Styles */
+.status-card,
+.timer-card,
+.settings-card,
+.question-display,
+.leaderboard-card,
+.participants-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.status-card h3,
+.timer-card h3,
+.settings-card h3,
+.question-display h3,
+.leaderboard-card h3,
+.participants-card h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.125rem;
+    color: var(--text-primary);
+}
+
+/* Status Info */
+.status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-item label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Badges */
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-waiting {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-paused {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+/* Timer Display */
+.timer-display {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.timer-circle {
+    width: 100px;
+    height: 100px;
+    border: 4px solid var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary);
+    background: var(--background);
+}
+
+.timer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Settings */
+.setting-item {
+    margin-bottom: 1rem;
+}
+
+.setting-item label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.setting-item input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--background);
+    color: var(--text-primary);
+}
+
+.setting-item input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+/* Question Display */
+.question-display {
+    flex: 1;
+    min-height: 300px;
+}
+
+.question-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-secondary);
+}
+
+.question-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.question-content {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+}
+
+.question-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.question-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.answer-option {
+    padding: 1rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.answer-option.correct {
+    border-color: #10b981;
+    background: #ecfdf5;
+}
+
+.answer-option.incorrect {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+/* Question Navigation */
+.question-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border);
+}
+
+#question-progress {
+    font-weight: 600;
+}
+
+/* Answer Results */
+.answer-results {
+    margin-top: 1rem;
+}
+
+.answer-results h4 {
+    margin-bottom: 1rem;
+}
+
+#answer-chart {
+    height: 200px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+/* Leaderboard */
+.leaderboard-toggle {
+    margin-bottom: 1rem;
+}
+
+.leaderboard-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.leaderboard-item:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-rank {
+    font-weight: bold;
+    color: var(--primary);
+    width: 30px;
+}
+
+.leaderboard-name {
+    flex: 1;
+    margin-left: 0.5rem;
+}
+
+.leaderboard-score {
+    font-weight: 600;
+}
+
+/* Participants */
+.participant-search {
+    margin-bottom: 1rem;
+}
+
+.participant-search input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--background);
+    color: var(--text-primary);
+}
+
+.participants-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.participant-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.participant-item:last-child {
+    border-bottom: none;
+}
+
+.participant-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 0.5rem;
+}
+
+.participant-status.online {
+    background: #10b981;
+}
+
+.participant-status.offline {
+    background: #6b7280;
+}
+
+/* Connection Status */
+.connection-status {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 0.5rem 1rem;
+    background: var(--success);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.connection-status.disconnected {
+    background: var(--danger);
+}
+
+.connection-status i {
+    font-size: 0.75rem;
+}
+
+/* Join Code Modal */
+.join-code-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.join-code-display span {
+    font-size: 2rem;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    background: var(--background);
+    padding: 1rem 2rem;
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    letter-spacing: 2px;
+}
+
+.join-url {
+    margin-top: 1.5rem;
+}
+
+.url-display {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.url-display input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--background);
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+}
+
+/* Empty States */
+.empty-leaderboard,
+.empty-participants {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .live-content {
+        grid-template-columns: 250px 1fr 250px;
+    }
+}
+
+@media (max-width: 900px) {
+    .live-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+    }
+    
+    .left-panel,
+    .right-panel {
+        order: 2;
+    }
+    
+    .center-panel {
+        order: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .live-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .session-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .live-content {
+        padding: 0.5rem;
+    }
+}

@@ -1,4 +1,4 @@
-// Progressive Web App (PWA) Module for PiGi Quiz
+// Progressive Web App (PWA) Module for QuizMaster
 class PWAManager {
     constructor() {
         this.deferredPrompt = null;
@@ -7,7 +7,7 @@ class PWAManager {
     }
 
     async init() {
-        console.log('🚀 Initializing PiGi Quiz PWA features...');
+        console.log('🚀 Initializing PWA features...');
         
         // Check if app is running in standalone mode
         this.checkStandaloneMode();

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Quiz Control - Quiz Platform</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/live-control.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="live-control-container">
+        <!-- Header -->
+        <header class="live-header">
+            <div class="session-info">
+                <h1 id="quiz-title">Live Quiz Control</h1>
+                <span class="session-id">Session: <span id="session-id-display"></span></span>
+            </div>
+            <div class="session-controls">
+                <button id="start-session-btn" class="btn btn-success">
+                    <i class="fas fa-play"></i> Session starten
+                </button>
+                <button id="pause-session-btn" class="btn btn-warning" style="display: none;">
+                    <i class="fas fa-pause"></i> Pausieren
+                </button>
+                <button id="end-session-btn" class="btn btn-danger">
+                    <i class="fas fa-stop"></i> Session beenden
+                </button>
+                <button id="theme-toggle" class="theme-toggle">🌙 Dunkler Modus</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="live-content">
+            <!-- Left Panel - Session Status -->
+            <div class="left-panel">
+                <div class="status-card">
+                    <h3>Session Status</h3>
+                    <div class="status-info">
+                        <div class="status-item">
+                            <label>Status:</label>
+                            <span id="session-status" class="badge badge-waiting">Wartend</span>
+                        </div>
+                        <div class="status-item">
+                            <label>Teilnehmer:</label>
+                            <span id="participant-count">0</span>
+                        </div>
+                        <div class="status-item">
+                            <label>Aktuelle Frage:</label>
+                            <span id="current-question">-</span>
+                        </div>
+                        <div class="status-item">
+                            <label>Verbleibende Zeit:</label>
+                            <span id="remaining-time">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timer-card">
+                    <h3>Timer Control</h3>
+                    <div class="timer-display">
+                        <div class="timer-circle">
+                            <span id="timer-display">30</span>
+                        </div>
+                    </div>
+                    <div class="timer-controls">
+                        <button id="start-timer-btn" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Timer starten
+                        </button>
+                        <button id="pause-timer-btn" class="btn btn-warning">
+                            <i class="fas fa-pause"></i> Pausieren
+                        </button>
+                        <button id="skip-question-btn" class="btn btn-secondary">
+                            <i class="fas fa-forward"></i> Überspringen
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Einstellungen</h3>
+                    <div class="setting-item">
+                        <label for="time-per-question">Zeit pro Frage (s):</label>
+                        <input type="number" id="time-per-question" min="5" max="300" value="30">
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="auto-advance" checked>
+                            Automatisch zur nächsten Frage
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="show-correct-answer" checked>
+                            Richtige Antwort anzeigen
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Current Question -->
+            <div class="center-panel">
+                <div class="question-display">
+                    <h3>Aktuelle Frage</h3>
+                    <div id="question-content">
+                        <div class="question-placeholder">
+                            <i class="fas fa-question-circle"></i>
+                            <p>Session starten, um Fragen anzuzeigen</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question-navigation">
+                    <button id="prev-question-btn" class="btn btn-outline">
+                        <i class="fas fa-chevron-left"></i> Vorherige
+                    </button>
+                    <span id="question-progress">0 / 0</span>
+                    <button id="next-question-btn" class="btn btn-outline">
+                        Nächste <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="answer-results">
+                    <h4>Antwort-Verteilung</h4>
+                    <div id="answer-chart"></div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Leaderboard & Participants -->
+            <div class="right-panel">
+                <div class="leaderboard-card">
+                    <h3>Live Bestenliste</h3>
+                    <div class="leaderboard-toggle">
+                        <label>
+                            <input type="checkbox" id="show-leaderboard" checked>
+                            Für Teilnehmer sichtbar
+                        </label>
+                    </div>
+                    <div id="leaderboard-list">
+                        <div class="empty-leaderboard">
+                            <p>Noch keine Ergebnisse</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="participants-card">
+                    <h3>Teilnehmer</h3>
+                    <div class="participant-search">
+                        <input type="text" placeholder="Teilnehmer suchen..." id="participant-search">
+                    </div>
+                    <div id="participants-list">
+                        <div class="empty-participants">
+                            <p>Warten auf Teilnehmer...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="connection-status" id="connection-status">
+            <i class="fas fa-wifi"></i> Verbunden
+        </div>
+    </div>
+
+    <!-- Join Code Modal -->
+    <div id="join-code-modal" class="modal">
+        <div class="modal-content">
+            <h2>Session gestartet!</h2>
+            <p>Teilnehmer können mit diesem Quiz-Namen beitreten:</p>
+            <div class="join-code-display">
+                <span id="join-code"></span>
+                <button class="btn btn-outline" id="copy-join-code">
+                    <i class="fas fa-copy"></i> Kopieren
+                </button>
+            </div>
+            <div class="join-url">
+                <p>Oder über diese URL:</p>
+                <div class="url-display">
+                    <input type="text" id="join-url" readonly>
+                    <button class="btn btn-outline" id="copy-join-url">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="continue-session">Weiter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="../js/main.js"></script>
+    <script type="module" src="../js/config.js"></script>
+    <script type="module" src="../js/cloud-api.js"></script>
+    <script type="module" src="../js/realtime.js"></script>
+    <script type="module" src="../js/live-quiz-manager.js"></script>
+    <script type="module" src="../js/live-control.js"></script>
+</body>
+</html>

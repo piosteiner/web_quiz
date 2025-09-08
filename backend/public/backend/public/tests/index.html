@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Suite Index - Quiz Tool</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .test-hub {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: var(--bg-primary);
+            min-height: 100vh;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .test-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px var(--shadow-medium);
+        }
+        
+        .test-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-color);
+        }
+        
+        .test-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .test-title {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .test-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .test-features {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        
+        .test-features li {
+            color: var(--text-secondary);
+            padding: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .test-features li::before {
+            content: '✓ ';
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .test-button {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .test-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        .test-status {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-beta {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-planned {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .overview-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">🧪 Test Suite</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Startseite</a></li>
+                <li><a href="../html/admin.html">Admin</a></li>
+                <li><a href="../html/join.html">Quiz beitreten</a></li>
+                <li><button id="theme-toggle" class="theme-toggle">🌙 Dunkler Modus</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="test-hub">
+        <h1 style="color: var(--text-primary); text-align: center; margin-bottom: 1rem;">
+            🧪 Quiz Tool Test Suite
+        </h1>
+        <p style="color: var(--text-secondary); text-align: center; margin-bottom: 3rem;">
+            Comprehensive testing framework for all Quiz Tool components and functionality
+        </p>
+
+        <!-- Overview Section -->
+        <div class="overview-section">
+            <h2 style="color: var(--text-primary); margin-bottom: 1rem;">📊 Test Overview</h2>
+            
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <div class="stat-value">4</div>
+                    <div class="stat-label">Test Suites</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">85+</div>
+                    <div class="stat-label">Test Cases</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Coverage Goal</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Ready</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Suites Grid -->
+        <div class="test-grid">
+            <!-- Theme Test -->
+            <div class="test-card">
+                <span class="test-status status-ready">Ready</span>
+                <span class="test-icon">🎨</span>
+                <h3 class="test-title">Theme System Test</h3>
+                <p class="test-description">
+                    Comprehensive testing of light/dark theme functionality across all components and pages.
+                </p>
+                <ul class="test-features">
+                    <li>CSS Variable Testing</li>
+                    <li>Theme Toggle Functionality</li>
+                    <li>Component Theme Response</li>
+                    <li>Cross-page Consistency</li>
+                    <li>Mobile Responsiveness</li>
+                </ul>
+                <a href="theme-test.html" class="test-button">Run Theme Tests</a>
+            </div>
+
+            <!-- Admin Test -->
+            <div class="test-card">
+                <span class="test-status status-ready">Ready</span>
+                <span class="test-icon">🔧</span>
+                <h3 class="test-title">Admin Panel Test</h3>
+                <p class="test-description">
+                    Complete testing suite for admin panel functionality including quiz creation and management.
+                </p>
+                <ul class="test-features">
+                    <li>Dashboard Functionality</li>
+                    <li>Quiz Creation Process</li>
+                    <li>Participant Management</li>
+                    <li>Form Validation</li>
+                    <li>Performance Testing</li>
+                </ul>
+                <a href="admin-test.html" class="test-button">Run Admin Tests</a>
+            </div>
+
+            <!-- Join Process Test -->
+            <div class="test-card">
+                <span class="test-status status-ready">Ready</span>
+                <span class="test-icon">🚪</span>
+                <h3 class="test-title">Join Process Test</h3>
+                <p class="test-description">
+                    Testing suite for quiz joining functionality, validation, and user experience.
+                </p>
+                <ul class="test-features">
+                    <li>Form Validation Scenarios</li>
+                    <li>UI/UX Testing</li>
+                    <li>Error Handling</li>
+                    <li>Real-time Connection</li>
+                    <li>Performance Metrics</li>
+                </ul>
+                <a href="join-test.html" class="test-button">Run Join Tests</a>
+            </div>
+
+            <!-- Live Control Test -->
+            <div class="test-card">
+                <span class="test-status status-beta">Beta</span>
+                <span class="test-icon">🔴</span>
+                <h3 class="test-title">Live Control Test</h3>
+                <p class="test-description">
+                    Testing live quiz control features, real-time updates, and session management.
+                </p>
+                <ul class="test-features">
+                    <li>Session Control Testing</li>
+                    <li>Real-time Updates</li>
+                    <li>Timer Functionality</li>
+                    <li>Participant Monitoring</li>
+                    <li>WebSocket Testing</li>
+                </ul>
+                <a href="#" class="test-button" onclick="alert('Coming Soon!')">Coming Soon</a>
+            </div>
+
+            <!-- API Integration Test -->
+            <div class="test-card">
+                <span class="test-status status-planned">Planned</span>
+                <span class="test-icon">🔗</span>
+                <h3 class="test-title">API Integration Test</h3>
+                <p class="test-description">
+                    Testing cloud API integration, data synchronization, and backend communication.
+                </p>
+                <ul class="test-features">
+                    <li>CRUD Operations</li>
+                    <li>Real-time Sync</li>
+                    <li>Error Handling</li>
+                    <li>Authentication</li>
+                    <li>Performance Testing</li>
+                </ul>
+                <a href="#" class="test-button" onclick="alert('In Development!')">In Development</a>
+            </div>
+
+            <!-- Performance Test -->
+            <div class="test-card">
+                <span class="test-status status-planned">Planned</span>
+                <span class="test-icon">⚡</span>
+                <h3 class="test-title">Performance Test</h3>
+                <p class="test-description">
+                    Comprehensive performance testing including load times, memory usage, and optimization.
+                </p>
+                <ul class="test-features">
+                    <li>Page Load Performance</li>
+                    <li>Memory Usage Analysis</li>
+                    <li>Network Optimization</li>
+                    <li>Mobile Performance</li>
+                    <li>Stress Testing</li>
+                </ul>
+                <a href="#" class="test-button" onclick="alert('Coming Soon!')">Coming Soon</a>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="overview-section">
+            <h2 style="color: var(--text-primary); margin-bottom: 1rem;">🚀 Quick Actions</h2>
+            
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="theme-test.html" class="test-button">🎨 Test Themes</a>
+                <a href="admin-test.html" class="test-button">🔧 Test Admin</a>
+                <a href="join-test.html" class="test-button">🚪 Test Join</a>
+                <a href="../index.html" class="test-button">🏠 Back to App</a>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="overview-section">
+            <h2 style="color: var(--text-primary); margin-bottom: 1rem;">📖 Testing Instructions</h2>
+            
+            <ol style="color: var(--text-secondary); line-height: 1.8;">
+                <li><strong>Start with Theme Test:</strong> Verify basic functionality works across all themes</li>
+                <li><strong>Test Admin Panel:</strong> Complete all admin functionality tests</li>
+                <li><strong>Test Join Process:</strong> Verify user joining experience</li>
+                <li><strong>Check Cross-browser:</strong> Repeat tests in Chrome, Firefox, Safari, Edge</li>
+                <li><strong>Mobile Testing:</strong> Test on various mobile devices and screen sizes</li>
+                <li><strong>Performance Check:</strong> Monitor load times and responsiveness</li>
+                <li><strong>Report Issues:</strong> Document any bugs or unexpected behavior</li>
+            </ol>
+        </div>
+    </main>
+
+    <footer style="background: var(--text-primary); color: var(--bg-primary); text-align: center; padding: 2rem; margin-top: 3rem;">
+        <p>Quiz Tool Test Suite - Ensuring Quality and Reliability</p>
+    </footer>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>
