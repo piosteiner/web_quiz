@@ -341,6 +341,73 @@ footer {
     background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
 }
 
+/* Dark mode for new action sections */
+[data-theme="dark"] .primary-action {
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.15));
+    border: 2px solid rgba(108, 92, 231, 0.8);
+    box-shadow: 0 4px 20px rgba(108, 92, 231, 0.1);
+}
+
+[data-theme="dark"] .primary-action:hover {
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), rgba(162, 155, 254, 0.2));
+    box-shadow: 0 10px 30px rgba(108, 92, 231, 0.3);
+}
+
+[data-theme="dark"] .secondary-action {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .secondary-action:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .action-title {
+    color: var(--primary-color);
+    text-shadow: 0 2px 4px rgba(108, 92, 231, 0.3);
+}
+
+[data-theme="dark"] .action-subtitle {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .action-description,
+[data-theme="dark"] .action-sub-description {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .btn-hero {
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    box-shadow: 0 8px 25px rgba(108, 92, 231, 0.4);
+    color: white;
+}
+
+[data-theme="dark"] .btn-hero:hover {
+    background: linear-gradient(135deg, #5a4fcf, #9085e8);
+    box-shadow: 0 12px 35px rgba(108, 92, 231, 0.5);
+    transform: translateY(-3px);
+}
+
+[data-theme="dark"] .footer-main h3 {
+    color: var(--primary-color);
+    text-shadow: 0 2px 4px rgba(108, 92, 231, 0.2);
+}
+
+[data-theme="dark"] .footer-main p {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .footer-bottom a {
+    color: var(--accent-color);
+}
+
+[data-theme="dark"] .footer-bottom a:hover {
+    color: #a29bfe;
+    text-shadow: 0 0 8px rgba(162, 155, 254, 0.4);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .hero h1 {
@@ -368,6 +435,88 @@ footer {
     .secondary-button {
         margin-left: 0;
         margin-top: 1rem;
+    }
+
+    /* Mobile adjustments for new action sections */
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-description {
+        font-size: 1.1rem;
+    }
+    
+    .primary-action, .secondary-action {
+        margin: 1rem 0;
+        padding: 1.5rem 1rem;
+    }
+    
+    .action-title {
+        font-size: 1.5rem;
+    }
+    
+    .action-subtitle {
+        font-size: 1.2rem;
+    }
+    
+    .action-description {
+        font-size: 1rem;
+    }
+    
+    .action-sub-description {
+        font-size: 0.9rem;
+    }
+    
+    .btn-hero {
+        font-size: 1.1rem;
+        padding: 0.9rem 2rem;
+    }
+    
+    .btn-medium {
+        font-size: 1rem;
+        padding: 0.7rem 1.5rem;
+    }
+    
+    .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .nav-links .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .primary-action, .secondary-action {
+        padding: 1rem 0.5rem;
+        margin: 1rem 0;
+    }
+    
+    .action-title {
+        font-size: 1.3rem;
+    }
+    
+    .hero h1, .hero-title {
+        font-size: 2rem;
+    }
+    
+    .btn-hero {
+        font-size: 1rem;
+        padding: 0.8rem 1.5rem;
+        letter-spacing: 0.3px;
+    }
+    
+    .nav-links {
+        gap: 0.5rem;
+    }
+    
+    .nav-links .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
     }
 }
 
@@ -405,33 +554,41 @@ footer {
 
 /* Hero Actions */
 .primary-action {
-    background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
-    border: 2px solid var(--primary-color);
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.08), rgba(162, 155, 254, 0.08));
+    border: 2px solid rgba(108, 92, 231, 0.6);
     border-radius: 20px;
     padding: 2rem;
     margin: 2rem 0;
     text-align: center;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 .primary-action:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(108, 92, 231, 0.2);
+    box-shadow: 0 10px 30px rgba(108, 92, 231, 0.25);
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.12), rgba(162, 155, 254, 0.12));
 }
 
 .secondary-action {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(108, 92, 231, 0.2);
     border-radius: 15px;
     padding: 1.5rem;
     margin: 1.5rem 0;
     text-align: center;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(5px);
 }
 
 .secondary-action:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.8);
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.1);
+    border-color: rgba(108, 92, 231, 0.3);
 }
 
 .action-title {
@@ -439,6 +596,7 @@ footer {
     margin-bottom: 0.5rem;
     color: var(--primary-color);
     font-weight: 700;
+    text-shadow: 0 2px 4px rgba(108, 92, 231, 0.1);
 }
 
 .action-subtitle {
@@ -453,6 +611,7 @@ footer {
     margin-bottom: 1.5rem;
     color: var(--text-secondary);
     line-height: 1.6;
+    font-weight: 400;
 }
 
 .action-sub-description {
@@ -460,6 +619,7 @@ footer {
     margin-bottom: 1rem;
     color: var(--text-secondary);
     line-height: 1.5;
+    opacity: 0.9;
 }
 
 .btn-hero {
@@ -468,18 +628,40 @@ footer {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    border: none;
+    color: white;
     box-shadow: 0 8px 25px rgba(108, 92, 231, 0.3);
+    transition: all 0.3s ease;
+    border-radius: 50px;
 }
 
 .btn-hero:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 35px rgba(108, 92, 231, 0.4);
+    background: linear-gradient(135deg, #5a4fcf, #9085e8);
 }
 
 .btn-medium {
     font-size: 1.1rem;
     padding: 0.8rem 2rem;
     font-weight: 600;
+    transition: all 0.3s ease;
+    border-radius: 25px;
+}
+
+/* Light mode specific button adjustments */
+[data-theme="light"] .btn-secondary {
+    background: rgba(108, 92, 231, 0.1);
+    color: var(--primary-color);
+    border: 2px solid rgba(108, 92, 231, 0.3);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+    background: rgba(108, 92, 231, 0.15);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2);
 }
 
 /* Simplified Footer */
@@ -492,23 +674,68 @@ footer {
     font-size: 1.8rem;
     margin-bottom: 0.5rem;
     color: var(--primary-color);
+    font-weight: 700;
 }
 
 .footer-main p {
     color: var(--text-secondary);
     font-size: 1rem;
+    opacity: 0.8;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.footer-bottom p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
 .footer-bottom a {
     color: var(--primary-color);
     text-decoration: none;
     font-weight: 600;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 .footer-bottom a:hover {
     color: var(--accent-color);
-    text-decoration: underline;
+    text-decoration: none;
+}
+
+.footer-bottom a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background: var(--accent-color);
+    transition: width 0.3s ease;
+}
+
+.footer-bottom a:hover::after {
+    width: 100%;
+}
+
+/* Light mode footer adjustments */
+[data-theme="light"] .footer-bottom {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .footer-main p,
+[data-theme="light"] .footer-bottom p {
+    color: rgba(0, 0, 0, 0.7);
 }
 
 /* Hero Section Adjustments */
