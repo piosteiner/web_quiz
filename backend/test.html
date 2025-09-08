@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Master - Live Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.connected {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .status.waiting {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        input, select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .quiz-question {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .answers {
+            display: grid;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .answer {
+            padding: 10px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .answer:hover {
+            background: #e9ecef;
+        }
+        .answer.selected {
+            background: #007bff;
+            color: white;
+        }
+        .leaderboard {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .leaderboard-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 QuizMaster Live Test</h1>
+    
+    <div class="container">
+        <h2>Connection Status</h2>
+        <div id="status" class="status disconnected">Disconnected</div>
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+    </div>
+
+    <div class="container">
+        <h2>Session Management</h2>
+        <div>
+            <label>Session ID:</label>
+            <input type="text" id="sessionId" placeholder="Enter session ID">
+            <button onclick="joinSession()">Join Session</button>
+        </div>
+        <div>
+            <label>Participant Name:</label>
+            <input type="text" id="participantName" placeholder="Enter your name" value="Test Player">
+        </div>
+        <div>
+            <button onclick="createSession()">Create New Session</button>
+            <button onclick="startSession()">Start Session (Host)</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Current Question</h2>
+        <div id="question-container">
+            <p>No active question</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Leaderboard</h2>
+        <div id="leaderboard" class="leaderboard">
+            <p>No leaderboard data</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Debug Log</h2>
+        <div id="log" class="log"></div>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket = null;
+        let currentSessionId = null;
+        let currentParticipantId = null;
+        let selectedAnswer = null;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(status, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${status}`;
+            statusDiv.textContent = message;
+        }
+
+        function connect() {
+            if (socket) {
+                log('Already connected');
+                return;
+            }
+
+            socket = io();
+            
+            socket.on('connect', () => {
+                log('Connected to server');
+                updateStatus('connected', 'Connected');
+            });
+
+            socket.on('disconnect', () => {
+                log('Disconnected from server');
+                updateStatus('disconnected', 'Disconnected');
+            });
+
+            socket.on('error', (data) => {
+                log(`Error: ${data.message}`);
+            });
+
+            socket.on('session-joined', (data) => {
+                log(`Joined session: ${data.session.id}`);
+                currentSessionId = data.session.id;
+                currentParticipantId = data.participant.id;
+                document.getElementById('sessionId').value = data.session.id;
+            });
+
+            socket.on('session-started', (data) => {
+                log('Session started!');
+                updateStatus('connected', 'Session Active');
+            });
+
+            socket.on('question-changed', (data) => {
+                log(`New question: ${data.questionIndex + 1}`);
+                displayQuestion(data.question, data.questionIndex);
+            });
+
+            socket.on('answer-submitted', (data) => {
+                log(`Answer submitted. Correct: ${data.isCorrect}, Score: ${data.score}`);
+            });
+
+            socket.on('leaderboard-updated', (data) => {
+                updateLeaderboard(data.leaderboard);
+            });
+
+            socket.on('leaderboard', (data) => {
+                updateLeaderboard(data.leaderboard);
+            });
+
+            socket.on('session-ended', (data) => {
+                log('Session ended');
+                updateLeaderboard(data.finalLeaderboard);
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                updateStatus('disconnected', 'Disconnected');
+            }
+        }
+
+        async function createSession() {
+            try {
+                const response = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        quizId: 'sample-quiz-1',
+                        config: {
+                            maxParticipants: 20,
+                            questionTimeLimit: 30
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('sessionId').value = data.data.session.id;
+                    log(`Session created: ${data.data.session.id}`);
+                } else {
+                    log(`Failed to create session: ${data.error}`);
+                }
+            } catch (error) {
+                log(`Error creating session: ${error.message}`);
+            }
+        }
+
+        function joinSession() {
+            const sessionId = document.getElementById('sessionId').value;
+            const participantName = document.getElementById('participantName').value;
+
+            if (!sessionId || !participantName) {
+                log('Please enter session ID and participant name');
+                return;
+            }
+
+            if (!socket) {
+                log('Please connect first');
+                return;
+            }
+
+            socket.emit('join-session', {
+                sessionId,
+                participantName
+            });
+
+            updateStatus('waiting', 'Joining session...');
+        }
+
+        function startSession() {
+            if (!socket || !currentSessionId) {
+                log('Please join a session first');
+                return;
+            }
+
+            socket.emit('start-session');
+            log('Starting session...');
+        }
+
+        function displayQuestion(question, questionIndex) {
+            const container = document.getElementById('question-container');
+            selectedAnswer = null;
+
+            container.innerHTML = `
+                <div class="quiz-question">
+                    <h3>Question ${questionIndex + 1}</h3>
+                    <p>${question.text}</p>
+                    <div class="answers">
+                        ${question.answers.map((answer, index) => `
+                            <div class="answer" onclick="selectAnswer('${answer.text}', ${index})">
+                                ${answer.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button onclick="submitAnswer(${questionIndex})" disabled id="submit-btn">Submit Answer</button>
+                </div>
+            `;
+        }
+
+        function selectAnswer(answerText, answerIndex) {
+            selectedAnswer = answerText;
+            
+            // Update visual selection
+            const answers = document.querySelectorAll('.answer');
+            answers.forEach((el, index) => {
+                el.classList.toggle('selected', index === answerIndex);
+            });
+
+            // Enable submit button
+            document.getElementById('submit-btn').disabled = false;
+        }
+
+        function submitAnswer(questionIndex) {
+            if (!selectedAnswer || !socket) {
+                log('Please select an answer');
+                return;
+            }
+
+            socket.emit('submit-answer', {
+                questionIndex,
+                answer: selectedAnswer
+            });
+
+            document.getElementById('submit-btn').disabled = true;
+            log(`Submitting answer: ${selectedAnswer}`);
+        }
+
+        function updateLeaderboard(leaderboard) {
+            const container = document.getElementById('leaderboard');
+            
+            if (!leaderboard || leaderboard.length === 0) {
+                container.innerHTML = '<p>No leaderboard data</p>';
+                return;
+            }
+
+            container.innerHTML = leaderboard.map((participant, index) => `
+                <div class="leaderboard-item">
+                    <span>${index + 1}. ${participant.name}</span>
+                    <span>${participant.score} points</span>
+                </div>
+            `).join('');
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // Auto-connect on page load
+        window.addEventListener('load', () => {
+            connect();
+        });
+    </script>
+</body>
+</html>

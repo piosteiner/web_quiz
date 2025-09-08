@@ -1,0 +1,10 @@
+# Cyclic.sh configuration for QuizMaster Backend
+name: quiz-master-backend
+runtime: nodejs16
+build:
+  commands:
+    - npm install
+start:
+  command: npm start
+env:
+  NODE_ENV: production

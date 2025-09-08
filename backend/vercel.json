@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "name": "quiz-master-backend",
+  "builds": [
+    {
+      "src": "server/app.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/server/app.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "server/app.js": {
+      "maxDuration": 30
+    }
+  }
+}
