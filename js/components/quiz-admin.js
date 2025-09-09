@@ -429,6 +429,11 @@ export class QuizAdmin {
         document.getElementById('quiz-list-view').style.display = 'none';
         document.getElementById('quiz-admin-view').style.display = 'block';
         
+        // Ensure we have a current quiz to work with
+        if (!this.currentQuiz) {
+            this.currentQuiz = this.createNewQuizTemplate();
+        }
+        
         this.populateAdminForm();
         this.renderParticipantList();
         this.setupAdminFormListeners();
@@ -551,6 +556,12 @@ export class QuizAdmin {
     }
 
     populateAdminForm() {
+        // Safety check to ensure we have a current quiz
+        if (!this.currentQuiz) {
+            console.warn('⚠️ No current quiz found, creating new template');
+            this.currentQuiz = this.createNewQuizTemplate();
+        }
+        
         const titleInput = document.getElementById('admin-quiz-title');
         const descInput = document.getElementById('admin-quiz-description');
         const quizIdDisplay = document.getElementById('admin-quiz-id-display');
