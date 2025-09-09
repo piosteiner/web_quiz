@@ -201,23 +201,6 @@ pm2 status
 pm2 logs
 ```
 
-### Nginx Configuration (Optional)
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-    
-    location / {
-        proxy_pass http://localhost:3002;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
 ### Current Production Architecture
 
 The application currently uses a simplified architecture:
@@ -230,6 +213,11 @@ The application currently uses a simplified architecture:
 - Frontend: `https://quiz.piogino.ch`
 - Backend API: `http://83.228.207.199:3002/api`
 - Health Check: `http://83.228.207.199:3002/api/health`
+
+**Infrastructure:**
+- No nginx proxy required - frontend connects directly to backend
+- Backend runs on PM2 for process management
+- Uses existing server infrastructure alongside other projects
 
 **Authentication:**
 - Admin Login: `admin@quiz.com` / `admin123`
