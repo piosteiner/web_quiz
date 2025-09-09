@@ -1,534 +1,553 @@
-// Cloud API Service for Quiz Management
+/**
+ * Enhanced Cloud API with proper error handling and data validation
+ */
+
 import CONFIG from './config.js';
 
-class CloudAPIService {
+// Custom Error Classes (inline since we don't have the core module yet)
+class APIError extends Error {
+    constructor(message, endpoint, originalError) {
+        super(message);
+        this.name = 'APIError';
+        this.endpoint = endpoint;
+        this.originalError = originalError;
+    }
+}
+
+class ValidationError extends APIError {
+    constructor(message, validationData) {
+        super(message);
+        this.name = 'ValidationError';
+        this.validationData = validationData;
+    }
+}
+
+class ServerError extends APIError {
+    constructor(message, serverData) {
+        super(message);
+        this.name = 'ServerError';
+        this.serverData = serverData;
+    }
+}
+
+// Simple API Client (inline)
+class APIClient {
+    constructor(baseURL = '') {
+        this.baseURL = baseURL;
+        this.defaultHeaders = {
+            'Content-Type': 'application/json'
+        };
+        this.retryAttempts = 3;
+        this.retryDelay = 1000;
+    }
+
+    async makeRequest(endpoint, options = {}) {
+        const url = this.baseURL + endpoint;
+        const config = {
+            headers: { ...this.defaultHeaders, ...options.headers },
+            ...options
+        };
+
+        for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
+            try {
+                console.log(`🌐 API Request (attempt ${attempt}): ${config.method || 'GET'} ${url}`);
+                
+                const response = await fetch(url, config);
+                
+                if (!response.ok) {
+                    await this.handleErrorResponse(response, attempt, endpoint);
+                    continue;
+                }
+
+                const data = await this.parseResponse(response);
+                console.log(`✅ API Success: ${config.method || 'GET'} ${endpoint}`);
+                return data;
+
+            } catch (error) {
+                console.error(`❌ API Error (attempt ${attempt}): ${endpoint}`, error);
+                
+                if (attempt === this.retryAttempts) {
+                    throw new APIError(`Request failed after ${this.retryAttempts} attempts: ${error.message}`, endpoint, error);
+                }
+                
+                await this.delay(this.retryDelay * attempt);
+            }
+        }
+    }
+
+    async handleErrorResponse(response, attempt, endpoint) {
+        const errorData = await this.parseResponse(response);
+        const errorMessage = errorData?.message || errorData?.error || `HTTP ${response.status}`;
+        
+        switch (response.status) {
+            case 400:
+                throw new ValidationError(errorMessage, errorData);
+            case 401:
+                throw new APIError('Nicht authentifiziert', endpoint);
+            case 403:
+                throw new APIError('Nicht autorisiert', endpoint);
+            case 404:
+                throw new APIError('Nicht gefunden', endpoint);
+            case 409:
+                throw new ValidationError(errorMessage, errorData);
+            case 422:
+                throw new ValidationError(errorMessage, errorData);
+            case 500:
+                console.error(`🔥 Server Error (${response.status}):`, {
+                    endpoint,
+                    attempt,
+                    error: errorData,
+                    timestamp: new Date().toISOString()
+                });
+                
+                if (attempt < this.retryAttempts) {
+                    console.log(`🔄 Retrying after server error...`);
+                    await this.delay(this.retryDelay * attempt);
+                    return;
+                }
+                throw new ServerError(errorMessage, errorData);
+            default:
+                throw new APIError(`HTTP ${response.status}: ${errorMessage}`, endpoint, errorData);
+        }
+    }
+
+    async parseResponse(response) {
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType?.includes('application/json')) {
+            return await response.json();
+        }
+        
+        if (contentType?.includes('text/')) {
+            return await response.text();
+        }
+        
+        return await response.blob();
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async get(endpoint, params = {}) {
+        const url = new URL(endpoint, this.baseURL);
+        Object.keys(params).forEach(key => {
+            if (params[key] !== undefined && params[key] !== null) {
+                url.searchParams.append(key, params[key]);
+            }
+        });
+        
+        return this.makeRequest(url.pathname + url.search, {
+            method: 'GET'
+        });
+    }
+
+    async post(endpoint, data = {}) {
+        return this.makeRequest(endpoint, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async put(endpoint, data = {}) {
+        return this.makeRequest(endpoint, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async delete(endpoint) {
+        return this.makeRequest(endpoint, {
+            method: 'DELETE'
+        });
+    }
+}
+
+class CloudAPIService extends APIClient {
     constructor() {
-        this.baseURL = CONFIG.API_BASE_URL;
-        this.authToken = localStorage.getItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN);
-        this.syncQueue = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.SYNC_QUEUE) || '[]');
-        this.isOnline = navigator.onLine;
-        this.backendAvailable = true; // Track backend availability
+        super(CONFIG.API_BASE_URL || 'https://quiz-backend.piogino.ch');
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = localStorage.getItem('quiz-auth-token');
         
-        this.setupEventListeners();
-        this.startSyncProcess();
+        if (this.authToken) {
+            this.defaultHeaders.Authorization = `Bearer ${this.authToken}`;
+        }
     }
 
-    setupEventListeners() {
-        // Network status monitoring
-        window.addEventListener('online', () => {
-            this.isOnline = true;
-            this.processSyncQueue();
-        });
-        
-        window.addEventListener('offline', () => {
-            this.isOnline = false;
-        });
-    }
-
-    // Authentication
+    /**
+     * Authentication methods
+     */
     async login(email, password) {
-        // For development: simple mock authentication
-        if (!this.isOnline || !this.backendAvailable) {
-            // Mock successful login when offline or backend unavailable
-            return {
-                success: true,
-                user: {
-                    id: 'dev-user-1',
-                    email: email,
-                    name: email.split('@')[0] || 'Admin User'
-                },
-                token: 'dev-token-' + Date.now()
-            };
-        }
-        
-        return await this.authenticate({ email, password });
-    }
-
-    async authenticate(credentials) {
         try {
-            const response = await this.makeRequest('/auth/login', {
-                method: 'POST',
-                body: JSON.stringify(credentials)
-            });
+            const response = await this.post('/api/auth/login', { email, password });
             
-            if (response.token) {
-                this.authToken = response.token;
-                localStorage.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, this.authToken);
-                localStorage.setItem(CONFIG.STORAGE_KEYS.USER_ID, response.user.id);
-            }
+            this.authToken = response.token;
+            this.currentUser = response.user;
+            this.isAuthenticated = true;
             
-            return response;
+            // Store token
+            localStorage.setItem('quiz-auth-token', this.authToken);
+            this.defaultHeaders.Authorization = `Bearer ${this.authToken}`;
+            
+            console.log('✅ Login successful:', this.currentUser.name);
+            return this.currentUser;
         } catch (error) {
-            // Fallback for development when backend is not available
-            console.warn('Authentication backend unavailable, using mock auth');
-            return {
-                success: true,
-                user: {
-                    id: 'dev-user-1',
-                    email: credentials.email,
-                    name: credentials.email.split('@')[0] || 'Admin User'
-                },
-                token: 'dev-token-' + Date.now()
-            };
+            console.error('❌ Login failed:', error);
+            throw error;
         }
     }
 
-    // Quiz CRUD Operations
-    async getQuizzes() {
+    async register(userData) {
         try {
-            if (!this.isOnline) {
-                return this.getCachedData('quizzes') || [];
+            // Validate required fields
+            if (!userData.name || !userData.email || !userData.password) {
+                throw new ValidationError('Name, E-Mail und Passwort sind erforderlich');
             }
+
+            const response = await this.post('/api/auth/register', userData);
             
-            const quizzes = await this.makeRequest(CONFIG.ENDPOINTS.QUIZZES);
-            this.backendAvailable = true; // Backend is working
-            this.cacheData('quizzes', quizzes);
+            this.authToken = response.token;
+            this.currentUser = response.user;
+            this.isAuthenticated = true;
+            
+            // Store token
+            localStorage.setItem('quiz-auth-token', this.authToken);
+            this.defaultHeaders.Authorization = `Bearer ${this.authToken}`;
+            
+            console.log('✅ Registration successful:', this.currentUser.name);
+            return this.currentUser;
+        } catch (error) {
+            console.error('❌ Registration failed:', error);
+            throw error;
+        }
+    }
+
+    async authenticate() {
+        if (!this.authToken) {
+            // Fallback mock authentication for development
+            console.log('🔄 No auth token, using fallback auth');
+            return this.createMockUser();
+        }
+
+        try {
+            const response = await this.get('/api/auth/me');
+            this.currentUser = response.user;
+            this.isAuthenticated = true;
+            
+            console.log('✅ Authentication verified:', this.currentUser.name);
+            return this.currentUser;
+        } catch (error) {
+            console.warn('Authentication failed, clearing token');
+            this.logout();
+            
+            // Fallback to mock user for development
+            return this.createMockUser();
+        }
+    }
+
+    createMockUser() {
+        const mockUser = {
+            id: 'mock-user-123',
+            name: 'Pio Steiner',
+            email: 'pio@example.com',
+            role: 'admin'
+        };
+        
+        this.currentUser = mockUser;
+        this.isAuthenticated = true;
+        
+        console.log('🔄 Using mock authentication:', mockUser.name);
+        return mockUser;
+    }
+
+    async logout() {
+        try {
+            if (this.authToken) {
+                await this.post('/api/auth/logout');
+            }
+        } catch (error) {
+            console.warn('Logout request failed:', error);
+        } finally {
+            // Clear local state regardless
+            this.authToken = null;
+            this.currentUser = null;
+            this.isAuthenticated = false;
+            
+            localStorage.removeItem('quiz-auth-token');
+            delete this.defaultHeaders.Authorization;
+            
+            console.log('✅ Logged out successfully');
+        }
+    }
+
+    /**
+     * Quiz management methods with proper data validation
+     */
+    async getAllQuizzes() {
+        try {
+            const response = await this.get('/api/quizzes');
+            const quizzes = Array.isArray(response) ? response : response.quizzes || [];
+            
+            console.log(`✅ Loaded ${quizzes.length} quizzes`);
             return quizzes;
         } catch (error) {
-            console.warn('Failed to fetch quizzes from server, using cache:', error);
-            this.backendAvailable = false; // Mark backend as unavailable
-            return this.getCachedData('quizzes') || [];
+            console.error('❌ Failed to load quizzes:', error);
+            
+            // Fallback for development/offline mode
+            return this.getMockQuizzes();
         }
     }
 
     async getQuiz(quizId) {
         try {
-            if (!this.isOnline) {
-                // Try to find in cached quizzes
-                const cachedQuizzes = this.getCachedData('quizzes') || [];
-                return cachedQuizzes.find(q => q.id === quizId) || null;
-            }
+            this.validateQuizId(quizId);
+            const response = await this.get(`/api/quizzes/${quizId}`);
             
-            const quiz = await this.makeRequest(`${CONFIG.ENDPOINTS.QUIZZES}/${quizId}`);
-            return quiz;
+            console.log(`✅ Loaded quiz: ${response.title}`);
+            return response;
         } catch (error) {
-            console.warn('Failed to fetch quiz from server:', error);
-            // Try cache as fallback
-            const cachedQuizzes = this.getCachedData('quizzes') || [];
-            return cachedQuizzes.find(q => q.id === quizId) || null;
+            console.error(`❌ Failed to load quiz ${quizId}:`, error);
+            throw error;
         }
     }
 
     async createQuiz(quizData) {
         try {
-            if (!this.isOnline || !this.backendAvailable) {
-                return this.queueOperation('CREATE_QUIZ', quizData);
-            }
+            this.validateQuizData(quizData, true);
             
-            const quiz = await this.makeRequest(CONFIG.ENDPOINTS.CREATE_QUIZ, {
-                method: 'POST',
-                body: JSON.stringify(quizData)
-            });
-            
-            this.backendAvailable = true; // Backend is working
-            this.updateLocalCache('quizzes', quiz, 'add');
-            return quiz;
-        } catch (error) {
-            throw new Error(`Quiz konnte nicht erstellt werden: ${error.message}`);
-        }
-    }
-
-    async updateQuiz(quizId, quizData) {
-        try {
-            if (!this.isOnline) {
-                return this.queueOperation('UPDATE_QUIZ', { id: quizId, data: quizData });
-            }
-            
-            const endpoint = CONFIG.ENDPOINTS.UPDATE_QUIZ.replace(':id', quizId);
-            const quiz = await this.makeRequest(endpoint, {
-                method: 'PUT',
-                body: JSON.stringify(quizData)
-            });
-            
-            this.updateLocalCache('quizzes', quiz, 'update');
-            return quiz;
-        } catch (error) {
-            throw new Error(`Quiz konnte nicht aktualisiert werden: ${error.message}`);
-        }
-    }
-
-    async deleteQuiz(quizId) {
-        try {
-            if (!this.isOnline) {
-                return this.queueOperation('DELETE_QUIZ', { id: quizId });
-            }
-            
-            const endpoint = CONFIG.ENDPOINTS.DELETE_QUIZ.replace(':id', quizId);
-            await this.makeRequest(endpoint, { method: 'DELETE' });
-            
-            this.updateLocalCache('quizzes', { id: quizId }, 'delete');
-            return true;
-        } catch (error) {
-            throw new Error(`Quiz konnte nicht gelöscht werden: ${error.message}`);
-        }
-    }
-
-    async publishQuiz(quizId) {
-        try {
-            const endpoint = CONFIG.ENDPOINTS.PUBLISH_QUIZ.replace(':id', quizId);
-            const quiz = await this.makeRequest(endpoint, { method: 'POST' });
-            
-            this.updateLocalCache('quizzes', quiz, 'update');
-            return quiz;
-        } catch (error) {
-            throw new Error(`Quiz konnte nicht veröffentlicht werden: ${error.message}`);
-        }
-    }
-
-    // Live Session Management
-    async createLiveSession(quizId, sessionConfig) {
-        try {
-            const sessionData = {
-                quizId,
-                config: sessionConfig,
-                createdAt: new Date().toISOString()
+            // Ensure required fields for new quiz
+            const cleanData = {
+                ...quizData,
+                id: quizData.id || this.generateQuizId(),
+                createdAt: quizData.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                participants: quizData.participants || [],
+                questions: quizData.questions || [],
+                published: false
             };
+
+            const response = await this.post('/api/quizzes', cleanData);
             
-            const session = await this.makeRequest(CONFIG.ENDPOINTS.CREATE_SESSION, {
-                method: 'POST',
-                body: JSON.stringify(sessionData)
-            });
-            
-            return session;
-        } catch (error) {
-            throw new Error(`Live-Session konnte nicht erstellt werden: ${error.message}`);
-        }
-    }
-
-    async startSession(sessionId) {
-        try {
-            const endpoint = CONFIG.ENDPOINTS.START_SESSION.replace(':id', sessionId);
-            const session = await this.makeRequest(endpoint, { method: 'POST' });
-            return session;
-        } catch (error) {
-            throw new Error(`Session konnte nicht gestartet werden: ${error.message}`);
-        }
-    }
-
-    async endSession(sessionId) {
-        try {
-            const endpoint = CONFIG.ENDPOINTS.END_SESSION.replace(':id', sessionId);
-            const results = await this.makeRequest(endpoint, { method: 'POST' });
-            return results;
-        } catch (error) {
-            throw new Error(`Session konnte nicht beendet werden: ${error.message}`);
-        }
-    }
-
-    async updateSessionState(sessionId, sessionState) {
-        try {
-            if (!this.isOnline) {
-                return this.queueOperation('UPDATE_SESSION_STATE', { id: sessionId, state: sessionState });
-            }
-
-            const endpoint = CONFIG.ENDPOINTS.UPDATE_SESSION_STATE?.replace(':id', sessionId) || `/api/sessions/${sessionId}/state`;
-            const response = await this.makeRequest(endpoint, {
-                method: 'PUT',
-                body: JSON.stringify(sessionState)
-            });
-            
-            console.log('✅ Session state updated on server');
+            console.log(`✅ Created quiz: ${response.title}`);
             return response;
         } catch (error) {
-            throw new Error(`Session-Status konnte nicht aktualisiert werden: ${error.message}`);
-        }
-    }
-
-    async submitAnswer(answerData) {
-        try {
-            if (!this.isOnline) {
-                return this.queueOperation('SUBMIT_ANSWER', answerData);
-            }
-
-            const endpoint = CONFIG.ENDPOINTS.SUBMIT_ANSWER || '/api/answers/submit';
-            const response = await this.makeRequest(endpoint, {
-                method: 'POST',
-                body: JSON.stringify(answerData)
-            });
+            console.error('❌ Failed to create quiz:', error);
             
-            console.log('✅ Answer submitted and saved to server');
-            return response;
-        } catch (error) {
-            throw new Error(`Antwort konnte nicht gespeichert werden: ${error.message}`);
-        }
-    }
-
-    async getSessionResults(sessionId) {
-        try {
-            const endpoint = CONFIG.ENDPOINTS.SESSION_RESULTS.replace(':id', sessionId);
-            return await this.makeRequest(endpoint);
-        } catch (error) {
-            throw new Error(`Session-Ergebnisse konnten nicht abgerufen werden: ${error.message}`);
-        }
-    }
-
-    // Analytics and Statistics
-    async getQuizStats(quizId) {
-        try {
-            const endpoint = CONFIG.ENDPOINTS.QUIZ_STATS.replace(':id', quizId);
-            return await this.makeRequest(endpoint);
-        } catch (error) {
-            console.warn('Failed to fetch quiz stats:', error);
-            return null;
-        }
-    }
-
-    // HTTP Request Helper
-    async makeRequest(endpoint, options = {}) {
-        const url = `${this.baseURL}${endpoint}`;
-        const defaultHeaders = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        };
-        
-        if (this.authToken) {
-            defaultHeaders['Authorization'] = `Bearer ${this.authToken}`;
-        }
-        
-        const config = {
-            method: 'GET',
-            headers: { ...defaultHeaders, ...options.headers },
-            ...options
-        };
-        
-        try {
-            const response = await fetch(url, config);
-            
-            if (!response.ok) {
-                if (response.status === 401) {
-                    this.handleAuthError();
-                    throw new Error('Nicht autorisiert');
-                }
-                throw new Error(`Server-Fehler: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.warn('Request failed:', error);
-            
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                throw new Error('Netzwerkfehler - Server nicht erreichbar');
-            }
-            
-            // Handle CORS and other network errors
-            if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
-                throw new Error('Backend-Verbindung fehlgeschlagen - CORS-Fehler');
+            if (error instanceof ServerError) {
+                // For 500 errors, try to provide more context
+                throw new Error(`Server-Fehler beim Erstellen des Quiz. Möglicherweise ist die Quiz-ID bereits vergeben. Versuchen Sie es erneut.`);
             }
             
             throw error;
         }
     }
 
-    // Offline Support
-    queueOperation(type, data) {
-        const operation = {
-            id: Date.now(),
-            type,
-            data,
-            timestamp: new Date().toISOString(),
-            retries: 0
-        };
-        
-        this.syncQueue.push(operation);
-        localStorage.setItem(CONFIG.STORAGE_KEYS.SYNC_QUEUE, JSON.stringify(this.syncQueue));
-        
-        // Return a temporary local result
-        return { ...data, id: operation.id, _pending: true };
-    }
+    async updateQuiz(quizId, quizData) {
+        try {
+            this.validateQuizId(quizId);
+            this.validateQuizData(quizData, false);
+            
+            // Ensure updatedAt timestamp
+            const cleanData = {
+                ...quizData,
+                updatedAt: new Date().toISOString()
+            };
 
-    async processSyncQueue() {
-        if (!this.isOnline || this.syncQueue.length === 0) return;
-        
-        const queue = [...this.syncQueue];
-        this.syncQueue = [];
-        
-        for (const operation of queue) {
-            try {
-                await this.processQueuedOperation(operation);
-            } catch (error) {
-                console.warn('Failed to sync operation:', operation, error);
+            const response = await this.put(`/api/quizzes/${quizId}`, cleanData);
+            
+            console.log(`✅ Updated quiz: ${response.title}`);
+            return response;
+        } catch (error) {
+            console.error(`❌ Failed to update quiz ${quizId}:`, error);
+            
+            if (error instanceof ServerError) {
+                // Provide specific guidance for 500 errors
+                console.error('Server error details:', {
+                    quizId,
+                    dataStructure: Object.keys(quizData),
+                    timestamp: new Date().toISOString()
+                });
                 
-                // Retry logic
-                if (operation.retries < 3) {
-                    operation.retries++;
-                    this.syncQueue.push(operation);
-                }
-            }
-        }
-        
-        localStorage.setItem(CONFIG.STORAGE_KEYS.SYNC_QUEUE, JSON.stringify(this.syncQueue));
-    }
-
-    async processQueuedOperation(operation) {
-        switch (operation.type) {
-            case 'CREATE_QUIZ':
-                return await this.createQuiz(operation.data);
-            case 'UPDATE_QUIZ':
-                return await this.updateQuiz(operation.data.id, operation.data.data);
-            case 'DELETE_QUIZ':
-                return await this.deleteQuiz(operation.data.id);
-            case 'UPDATE_SESSION_STATE':
-                return await this.updateSessionState(operation.data.id, operation.data.state);
-            case 'SUBMIT_ANSWER':
-                return await this.submitAnswer(operation.data);
-            default:
-                throw new Error(`Unbekannter Operationstyp: ${operation.type}`);
-        }
-    }
-
-    // Cache Management
-    cacheData(key, data) {
-        const cacheEntry = {
-            data,
-            timestamp: Date.now(),
-            expiry: Date.now() + CONFIG.DEFAULTS.CACHE_EXPIRY
-        };
-        localStorage.setItem(`cache_${key}`, JSON.stringify(cacheEntry));
-    }
-
-    getCachedData(key) {
-        try {
-            const cached = localStorage.getItem(`cache_${key}`);
-            if (!cached) return null;
-            
-            const cacheEntry = JSON.parse(cached);
-            if (Date.now() > cacheEntry.expiry) {
-                localStorage.removeItem(`cache_${key}`);
-                return null;
+                throw new Error(`Server-Fehler beim Aktualisieren des Quiz. Die Datenstruktur könnte inkorrekt sein. Versuchen Sie, das Quiz neu zu laden.`);
             }
             
-            return cacheEntry.data;
+            throw error;
+        }
+    }
+
+    async deleteQuiz(quizId) {
+        try {
+            this.validateQuizId(quizId);
+            await this.delete(`/api/quizzes/${quizId}`);
+            
+            console.log(`✅ Deleted quiz: ${quizId}`);
         } catch (error) {
-            console.warn('Cache read error:', error);
-            return null;
+            console.error(`❌ Failed to delete quiz ${quizId}:`, error);
+            throw error;
         }
     }
 
-    updateLocalCache(key, item, action) {
-        const cached = this.getCachedData(key) || [];
-        let updated;
-        
-        switch (action) {
-            case 'add':
-                updated = [...cached, item];
-                break;
-            case 'update':
-                updated = cached.map(i => i.id === item.id ? { ...i, ...item } : i);
-                break;
-            case 'delete':
-                updated = cached.filter(i => i.id !== item.id);
-                break;
-            default:
-                return;
+    /**
+     * Participant management
+     */
+    async addParticipant(quizId, participantData) {
+        try {
+            this.validateQuizId(quizId);
+            this.validateParticipantData(participantData);
+            
+            const response = await this.post(`/api/quizzes/${quizId}/participants`, participantData);
+            
+            console.log(`✅ Added participant to quiz ${quizId}`);
+            return response;
+        } catch (error) {
+            console.error(`❌ Failed to add participant to quiz ${quizId}:`, error);
+            throw error;
         }
-        
-        this.cacheData(key, updated);
     }
 
-    // Periodic sync
-    startSyncProcess() {
-        setInterval(() => {
-            if (this.isOnline) {
-                this.processSyncQueue();
+    async removeParticipant(quizId, participantId) {
+        try {
+            this.validateQuizId(quizId);
+            
+            await this.delete(`/api/quizzes/${quizId}/participants/${participantId}`);
+            
+            console.log(`✅ Removed participant from quiz ${quizId}`);
+        } catch (error) {
+            console.error(`❌ Failed to remove participant from quiz ${quizId}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Data validation methods
+     */
+    validateQuizId(quizId) {
+        if (!quizId || typeof quizId !== 'string') {
+            throw new ValidationError('Quiz-ID ist erforderlich und muss ein String sein');
+        }
+        
+        if (quizId.length < 4 || quizId.length > 20) {
+            throw new ValidationError('Quiz-ID muss zwischen 4 und 20 Zeichen lang sein');
+        }
+    }
+
+    validateQuizData(quizData, isNew = false) {
+        if (!quizData || typeof quizData !== 'object') {
+            throw new ValidationError('Quiz-Daten sind erforderlich');
+        }
+
+        // Required fields for all quizzes
+        if (!quizData.title || quizData.title.trim().length === 0) {
+            throw new ValidationError('Quiz-Titel ist erforderlich');
+        }
+
+        if (isNew && !quizData.id) {
+            throw new ValidationError('Quiz-ID ist für neue Quizzes erforderlich');
+        }
+
+        // Validate participants array
+        if (quizData.participants && !Array.isArray(quizData.participants)) {
+            throw new ValidationError('Teilnehmer müssen als Array angegeben werden');
+        }
+
+        // Validate questions array
+        if (quizData.questions && !Array.isArray(quizData.questions)) {
+            throw new ValidationError('Fragen müssen als Array angegeben werden');
+        }
+
+        // Validate settings object
+        if (quizData.settings && typeof quizData.settings !== 'object') {
+            throw new ValidationError('Einstellungen müssen als Objekt angegeben werden');
+        }
+    }
+
+    validateParticipantData(participantData) {
+        if (!participantData || typeof participantData !== 'object') {
+            throw new ValidationError('Teilnehmer-Daten sind erforderlich');
+        }
+
+        if (!participantData.name || participantData.name.trim().length === 0) {
+            throw new ValidationError('Teilnehmer-Name ist erforderlich');
+        }
+
+        if (participantData.email && !this.isValidEmail(participantData.email)) {
+            throw new ValidationError('Ungültige E-Mail-Adresse');
+        }
+    }
+
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    generateQuizId() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < 8; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+
+    /**
+     * Mock data for development/fallback
+     */
+    getMockQuizzes() {
+        console.log('🔄 Using mock quiz data');
+        return [
+            {
+                id: 'DEMO123',
+                title: 'Demo Quiz',
+                description: 'Ein Beispiel-Quiz für Testzwecke',
+                participants: [],
+                questions: [
+                    {
+                        id: '1',
+                        text: 'Was ist die Hauptstadt von Deutschland?',
+                        answers: [
+                            { id: 'a', text: 'Berlin', correct: true },
+                            { id: 'b', text: 'München', correct: false },
+                            { id: 'c', text: 'Hamburg', correct: false },
+                            { id: 'd', text: 'Köln', correct: false }
+                        ],
+                        timeLimit: 30,
+                        points: 10
+                    }
+                ],
+                settings: { timePerQuestion: 30 },
+                published: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             }
-        }, CONFIG.DEFAULTS.SYNC_INTERVAL);
+        ];
     }
 
-    // Error Handling
-    handleAuthError() {
-        localStorage.removeItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN);
-        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
-        this.authToken = null;
-        
-        // Redirect to login or show login modal
-        window.dispatchEvent(new CustomEvent('auth_required'));
-    }
-
-    // Utility Methods
-    isConnected() {
-        return this.isOnline;
-    }
-
-    getPendingOperations() {
-        return this.syncQueue.length;
-    }
-
-    clearCache() {
-        Object.keys(localStorage)
-            .filter(key => key.startsWith('cache_'))
-            .forEach(key => localStorage.removeItem(key));
-    }
-
-    // Live session participant methods
-    async joinSession(code, participantName) {
+    /**
+     * Live session methods
+     */
+    async createSession(quizId) {
         try {
-            const response = await this.makeRequest(CONFIG.ENDPOINTS.JOIN_SESSION, {
-                method: 'POST',
-                body: JSON.stringify({
-                    code: code,
-                    participantName: participantName,
-                    timestamp: new Date().toISOString()
-                })
-            });
+            this.validateQuizId(quizId);
+            const response = await this.post('/api/sessions', { quizId });
+            
+            console.log(`✅ Created session for quiz ${quizId}`);
             return response;
         } catch (error) {
-            throw new Error(`Session konnte nicht beigetreten werden: ${error.message}`);
+            console.error(`❌ Failed to create session for quiz ${quizId}:`, error);
+            throw error;
         }
     }
 
-    async joinQuizByName(quizName, participantName) {
+    async getSession(sessionId) {
         try {
-            const response = await this.makeRequest(CONFIG.ENDPOINTS.JOIN_QUIZ_BY_NAME, {
-                method: 'POST',
-                body: JSON.stringify({
-                    quizName: quizName,
-                    participantName: participantName,
-                    timestamp: new Date().toISOString()
-                })
-            });
+            const response = await this.get(`/api/sessions/${sessionId}`);
+            
+            console.log(`✅ Loaded session: ${sessionId}`);
             return response;
         } catch (error) {
-            throw new Error(`Quiz "${quizName}" konnte nicht beigetreten werden: ${error.message}`);
-        }
-    }
-
-    async leaveSession(sessionId, participantId) {
-        try {
-            const endpoint = CONFIG.ENDPOINTS.LEAVE_SESSION
-                .replace(':sessionId', sessionId)
-                .replace(':participantId', participantId);
-            
-            return await this.makeRequest(endpoint, { method: 'POST' });
-        } catch (error) {
-            throw new Error(`Session konnte nicht verlassen werden: ${error.message}`);
-        }
-    }
-
-    async submitAnswer(sessionId, participantId, answerData) {
-        try {
-            const endpoint = CONFIG.ENDPOINTS.SUBMIT_ANSWER.replace(':sessionId', sessionId);
-            
-            const response = await this.makeRequest(endpoint, {
-                method: 'POST',
-                body: JSON.stringify({
-                    participantId: participantId,
-                    ...answerData,
-                    timestamp: new Date().toISOString()
-                })
-            });
-            
-            return response;
-        } catch (error) {
-            throw new Error(`Antwort konnte nicht übermittelt werden: ${error.message}`);
-        }
-    }
-
-    async getSessionParticipants(sessionId) {
-        try {
-            const endpoint = CONFIG.ENDPOINTS.SESSION_PARTICIPANTS.replace(':sessionId', sessionId);
-            return await this.makeRequest(endpoint);
-        } catch (error) {
-            throw new Error(`Teilnehmer konnten nicht abgerufen werden: ${error.message}`);
+            console.error(`❌ Failed to load session ${sessionId}:`, error);
+            throw error;
         }
     }
 }

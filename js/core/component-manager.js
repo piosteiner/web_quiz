@@ -1,0 +1,218 @@
+/**
+ * Unified Component Manager
+ * Handles component lifecycle, event management, and prevents memory leaks
+ */
+
+export class ComponentManager {
+    constructor(app) {
+        this.app = app;
+        this.components = new Map();
+        this.eventListeners = new Map(); // Track all event listeners by component
+        this.globalEventHandlers = new Set(); // Track global handlers
+    }
+
+    /**
+     * Register a component with proper lifecycle management
+     */
+    async registerComponent(name, ComponentClass, params = {}) {
+        // Cleanup existing component if it exists
+        if (this.components.has(name)) {
+            await this.cleanupComponent(name);
+        }
+
+        console.log(`🔧 Registering component: ${name}`);
+        
+        // Create component instance
+        const component = new ComponentClass(this.app);
+        this.components.set(name, component);
+        this.eventListeners.set(name, []);
+
+        // Initialize with lifecycle protection
+        if (component.init && !component._isInitialized) {
+            await component.init(params);
+            component._isInitialized = true;
+        }
+
+        return component;
+    }
+
+    /**
+     * Add event listener with automatic cleanup tracking
+     */
+    addEventListener(componentName, element, event, handler, options = {}) {
+        if (!this.eventListeners.has(componentName)) {
+            this.eventListeners.set(componentName, []);
+        }
+
+        // Wrap handler to include component name for debugging
+        const wrappedHandler = (e) => {
+            try {
+                handler.call(this.components.get(componentName), e);
+            } catch (error) {
+                console.error(`Error in ${componentName} event handler (${event}):`, error);
+            }
+        };
+
+        element.addEventListener(event, wrappedHandler, options);
+        
+        // Track for cleanup
+        this.eventListeners.get(componentName).push({
+            element,
+            event,
+            handler: wrappedHandler,
+            options
+        });
+    }
+
+    /**
+     * Add global event listener (document/window level)
+     */
+    addGlobalEventListener(componentName, target, event, handler, options = {}) {
+        const wrappedHandler = (e) => {
+            try {
+                handler.call(this.components.get(componentName), e);
+            } catch (error) {
+                console.error(`Error in ${componentName} global event handler (${event}):`, error);
+            }
+        };
+
+        target.addEventListener(event, wrappedHandler, options);
+        
+        // Track for cleanup
+        if (!this.eventListeners.has(componentName)) {
+            this.eventListeners.set(componentName, []);
+        }
+        
+        this.eventListeners.get(componentName).push({
+            element: target,
+            event,
+            handler: wrappedHandler,
+            options,
+            isGlobal: true
+        });
+    }
+
+    /**
+     * Clean up a specific component
+     */
+    async cleanupComponent(name) {
+        console.log(`🧹 Cleaning up component: ${name}`);
+        
+        const component = this.components.get(name);
+        if (component) {
+            // Call component cleanup if it exists
+            if (component.cleanup && typeof component.cleanup === 'function') {
+                await component.cleanup();
+            }
+            
+            // Clear initialization flag
+            component._isInitialized = false;
+        }
+
+        // Remove all event listeners for this component
+        const listeners = this.eventListeners.get(name) || [];
+        listeners.forEach(({ element, event, handler, options }) => {
+            element.removeEventListener(event, handler, options);
+        });
+        
+        this.eventListeners.set(name, []);
+    }
+
+    /**
+     * Get component instance
+     */
+    getComponent(name) {
+        return this.components.get(name);
+    }
+
+    /**
+     * Clean up all components
+     */
+    async cleanupAll() {
+        console.log('🧹 Cleaning up all components');
+        
+        for (const [name] of this.components) {
+            await this.cleanupComponent(name);
+        }
+        
+        this.components.clear();
+        this.eventListeners.clear();
+    }
+
+    /**
+     * Reinitialize a component (cleanup + register)
+     */
+    async reinitializeComponent(name, ComponentClass, params = {}) {
+        await this.cleanupComponent(name);
+        return await this.registerComponent(name, ComponentClass, params);
+    }
+}
+
+/**
+ * Base Component Class
+ * All components should extend this for proper lifecycle management
+ */
+export class BaseComponent {
+    constructor(app) {
+        this.app = app;
+        this.componentManager = app.componentManager;
+        this.componentName = this.constructor.name;
+        this._isInitialized = false;
+    }
+
+    /**
+     * Add event listener through component manager
+     */
+    addEventListener(element, event, handler, options) {
+        this.componentManager.addEventListener(this.componentName, element, event, handler, options);
+    }
+
+    /**
+     * Add global event listener through component manager
+     */
+    addGlobalEventListener(target, event, handler, options) {
+        this.componentManager.addGlobalEventListener(this.componentName, target, event, handler, options);
+    }
+
+    /**
+     * Safe element query
+     */
+    $(selector) {
+        return document.querySelector(selector);
+    }
+
+    /**
+     * Safe element query all
+     */
+    $$(selector) {
+        return document.querySelectorAll(selector);
+    }
+
+    /**
+     * Show notification through app
+     */
+    notify(message, type = 'info') {
+        this.app.showNotification(message, type);
+    }
+
+    /**
+     * Navigate through app
+     */
+    navigate(route, state = {}) {
+        this.app.navigateTo(route, state);
+    }
+
+    /**
+     * Override in child classes for custom initialization
+     */
+    async init(params = {}) {
+        console.log(`🔧 Initializing ${this.componentName}`);
+    }
+
+    /**
+     * Override in child classes for custom cleanup
+     */
+    async cleanup() {
+        console.log(`🧹 Cleaning up ${this.componentName}`);
+    }
+}

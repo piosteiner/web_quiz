@@ -4,33 +4,25 @@
  */
 
 import CONFIG from './config.js';
-import CloudAPIService from './cloud-api.js?v=1.0.7';
+import CloudAPIService from './cloud-api.js?v=2.0.0';
 import realTimeService from './realtime.js';
+import { ComponentManager } from './core/component-manager.js';
+import { StateManager } from './core/state-manager.js';
 
 class PiGiQuizApp {
     constructor() {
-        this.currentView = 'home';
-        this.currentUser = null;
+        // Initialize core managers
+        this.stateManager = new StateManager();
+        this.componentManager = new ComponentManager(this);
+        
+        // Initialize services
         this.cloudAPI = new CloudAPIService();
         this.realtime = realTimeService;
         
-        // Application state
-        this.state = {
-            user: null,
-            session: null,
-            quiz: null,
-            participant: null
-        };
-        
-        // Component modules (lazy loaded)
-        this.components = {
-            join: null,
-            admin: null,
-            editor: null,
-            live: null,
-            participant: null,
-            participantJoin: null
-        };
+        // Legacy compatibility
+        this.currentView = 'home';
+        this.currentUser = null;
+        this.components = {}; // Legacy component access
         
         this.init();
     }
@@ -153,13 +145,11 @@ class PiGiQuizApp {
         // Show/hide live control nav based on session
         const liveNavLink = document.querySelector('[data-route="live"]');
         if (liveNavLink) {
-            liveNavLink.style.display = this.state.session ? 'block' : 'none';
+            const hasSession = this.stateManager.get('session');
+            liveNavLink.style.display = hasSession ? 'block' : 'none';
         }
     }
 
-    /**
-     * Component Loading (Lazy Loading)
-     */
     async loadComponent(componentName, params = {}) {
         if (componentName === 'home') {
             this.initHomeView();
@@ -167,84 +157,86 @@ class PiGiQuizApp {
         }
         
         try {
-            switch (componentName) {
-                case 'join':
-                    // Check if this is a participant join request
+            // Clean up existing components to prevent conflicts
+            await this.componentManager.cleanupComponent(componentName);
+            
+            // Component mapping with unified architecture
+            const componentMap = {
+                'join': async () => {
                     const urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.get('quiz') && urlParams.get('join') === 'true') {
-                        if (!this.components.participantJoin) {
-                            const { ParticipantJoin } = await import('./components/participant-join.js');
-                            this.components.participantJoin = new ParticipantJoin(this);
-                        }
-                        await this.components.participantJoin.init(params);
-                    } else {
-                        if (!this.components.join) {
-                            const { QuizParticipant } = await import('./components/quiz-participant.js');
-                            this.components.join = new QuizParticipant(this);
-                        }
-                        await this.components.join.init(params);
-                    }
-                    break;
-                    
-                case 'participantJoin':
-                    if (!this.components.participantJoin) {
                         const { ParticipantJoin } = await import('./components/participant-join.js');
-                        this.components.participantJoin = new ParticipantJoin(this);
+                        return await this.componentManager.registerComponent('participantJoin', ParticipantJoin, params);
+                    } else {
+                        const { QuizParticipant } = await import('./components/quiz-participant.js');
+                        return await this.componentManager.registerComponent('join', QuizParticipant, params);
                     }
-                    await this.components.participantJoin.init(params);
-                    break;
+                },
+                'participantJoin': async () => {
+                    const { ParticipantJoin } = await import('./components/participant-join.js');
+                    return await this.componentManager.registerComponent('participantJoin', ParticipantJoin, params);
+                },
+                'participant': async () => {
+                    const { Participant } = await import('./components/participant.js');
+                    return await this.componentManager.registerComponent('participant', Participant, params);
+                },
+                'admin': async () => {
+                    // Use unified admin component
+                    const { QuizAdmin } = await import('./components/quiz-admin.js?v=2.0.0');
+                    const adminComponent = await this.componentManager.registerComponent('admin', QuizAdmin, params);
+                    this.components.admin = adminComponent; // Legacy compatibility
                     
-                case 'participant':
-                    if (!this.components.participant) {
-                        const { Participant } = await import('./components/participant.js');
-                        this.components.participant = new Participant(this);
-                    }
-                    await this.components.participant.init(params);
-                    break;
+                    // Also register editor component for admin view
+                    const { QuizEditor } = await import('./components/quiz-editor.js');
+                    const editorComponent = await this.componentManager.registerComponent('editor', QuizEditor, params);
+                    this.components.editor = editorComponent; // Legacy compatibility
                     
-                case 'admin':
-                    if (!this.components.admin) {
-                        const QuizAdminModule = await import('./components/quiz-admin.js');
-                        this.components.admin = new QuizAdminModule.QuizAdmin(this);
-                    }
-                    if (!this.components.editor) {
-                        const QuizEditorModule = await import('./components/quiz-editor.js');
-                        this.components.editor = new QuizEditorModule.QuizEditor(this);
-                    }
-                    await this.components.admin.init(params);
-                    await this.components.editor.init(params);
-                    break;
-                    
-                case 'quiz-admin':
-                    if (!this.components.admin) {
-                        const QuizAdminModule = await import('./components/quiz-admin.js');
-                        this.components.admin = new QuizAdminModule.QuizAdmin(this);
-                    }
-                    await this.components.admin.init(params);
-                    break;
-                    
-                case 'live':
-                    if (!this.components.live) {
-                        const { LiveController } = await import('./components/live-controller.js');
-                        this.components.live = new LiveController(this);
-                    }
-                    await this.components.live.init(params);
-                    break;
+                    return adminComponent;
+                },
+                'quiz-admin': async () => {
+                    // Use unified admin component
+                    const { QuizAdmin } = await import('./components/quiz-admin.js?v=2.0.0');
+                    const component = await this.componentManager.registerComponent('admin', QuizAdmin, params);
+                    this.components.admin = component; // Legacy compatibility
+                    return component;
+                },
+                'live': async () => {
+                    const { LiveController } = await import('./components/live-controller.js');
+                    return await this.componentManager.registerComponent('live', LiveController, params);
+                }
+            };
+
+            const component = componentMap[componentName] ? await componentMap[componentName]() : null;
+            
+            if (!component) {
+                console.warn(`Unknown component: ${componentName}`);
+                return null;
             }
+            
+            // Update legacy components reference
+            this.components[componentName] = component;
+            
+            return component;
+            
         } catch (error) {
             console.error(`Error loading component ${componentName}:`, error);
             this.showNotification(`Fehler beim Laden der Komponente: ${error.message}`, 'error');
+            
+            // Try to recover by navigating to home
+            if (componentName !== 'home') {
+                console.log('Attempting recovery by navigating to home');
+                this.navigateTo('home');
+            }
         }
     }
 
     initHomeView() {
-        // Home view is static, just ensure proper setup
+        // Home view initialization
         this.setupQuizPreview();
     }
 
     setupQuizPreview() {
-        // Quiz preview is already in HTML, no dynamic loading needed
-        // Could add animation or dynamic content here if needed
+        // Preview functionality setup
     }
 
     /**
@@ -252,36 +244,77 @@ class PiGiQuizApp {
      */
     setupThemeSystem() {
         const themeToggle = document.getElementById('theme-toggle');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const savedTheme = localStorage.getItem('pigi-quiz-theme') || (prefersDark ? 'dark' : 'light');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                this.toggleTheme();
+            });
+        }
         
-        // Set initial theme
+        // Load saved theme
+        const savedTheme = localStorage.getItem('quiz-theme') || 'light';
         this.setTheme(savedTheme);
-        
-        // Theme toggle handler
-        themeToggle?.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            this.setTheme(newTheme);
-        });
-        
-        // Listen for system theme changes
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-            if (!localStorage.getItem('pigi-quiz-theme')) {
-                this.setTheme(e.matches ? 'dark' : 'light');
-            }
-        });
+    }
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        this.setTheme(newTheme);
     }
 
     setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('pigi-quiz-theme', theme);
+        localStorage.setItem('quiz-theme', theme);
         
-        // Update theme toggle icon
-        const themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-            const icon = themeToggle.querySelector('i');
-            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        const themeIcon = document.querySelector('#theme-toggle i');
+        if (themeIcon) {
+            themeIcon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+    }
+
+    /**
+     * Notification System
+     */
+    setupNotifications() {
+        // Create notification container if it doesn't exist
+        if (!document.getElementById('notification-container')) {
+            const container = document.createElement('div');
+            container.id = 'notification-container';
+            container.className = 'notification-container';
+            document.body.appendChild(container);
+        }
+    }
+
+    showNotification(message, type = 'info', duration = 5000) {
+        const container = document.getElementById('notification-container');
+        if (!container) return;
+
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        
+        const icons = {
+            info: 'fa-info-circle',
+            success: 'fa-check-circle',
+            warning: 'fa-exclamation-triangle',
+            error: 'fa-times-circle'
+        };
+        
+        notification.innerHTML = `
+            <i class="fas ${icons[type] || icons.info}"></i>
+            <span>${message}</span>
+            <button class="notification-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        container.appendChild(notification);
+        
+        // Auto-remove after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, duration);
         }
     }
 
@@ -289,96 +322,27 @@ class PiGiQuizApp {
      * Authentication
      */
     async checkAuth() {
-        const token = localStorage.getItem('quiz_auth_token');
-        const userData = localStorage.getItem('quiz_user_data');
-        
-        if (token && userData) {
-            try {
-                this.state.user = JSON.parse(userData);
-                // Validate token with server if needed
-                console.log('✅ User authenticated:', this.state.user.name);
-            } catch (error) {
-                console.warn('Invalid stored user data, clearing:', error);
-                this.logout();
+        try {
+            const user = await this.cloudAPI.authenticate();
+            if (user) {
+                this.stateManager.setState({ user }, 'checkAuth');
+                console.log('✅ User authenticated:', user.name);
             }
+        } catch (error) {
+            console.log('No authentication found');
         }
     }
 
-    login(userData, token) {
-        this.state.user = userData;
-        localStorage.setItem('quiz_auth_token', token);
-        localStorage.setItem('quiz_user_data', JSON.stringify(userData));
-        
-        this.showNotification(`Willkommen, ${userData.name}!`, 'success');
-        this.updateNavigation();
-    }
-
-    logout() {
-        this.state.user = null;
-        localStorage.removeItem('quiz_auth_token');
-        localStorage.removeItem('quiz_user_data');
-        
-        this.showNotification('Erfolgreich abgemeldet', 'info');
-        this.navigateTo('home');
-    }
-
-    /**
-     * Session Management
-     */
-    setSession(sessionData) {
-        this.state.session = sessionData;
-        this.updateNavigation();
-    }
-
-    clearSession() {
-        this.state.session = null;
-        this.updateNavigation();
-    }
-
-    /**
-     * Notification System
-     */
-    setupNotifications() {
-        // Notification container already in HTML
-    }
-
-    showNotification(message, type = 'info', duration = 3000) {
-        const container = document.getElementById('notification-container');
-        if (!container) return;
-        
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        
-        const icon = this.getNotificationIcon(type);
-        notification.innerHTML = `
-            <i class="${icon}"></i>
-            <span>${message}</span>
-        `;
-        
-        container.appendChild(notification);
-        
-        // Add show class for animation
-        setTimeout(() => notification.classList.add('show'), 10);
-        
-        // Auto remove
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 300);
-        }, duration);
-    }
-
-    getNotificationIcon(type) {
-        const icons = {
-            success: 'fas fa-check-circle',
-            error: 'fas fa-exclamation-circle',
-            warning: 'fas fa-exclamation-triangle',
-            info: 'fas fa-info-circle'
-        };
-        return icons[type] || icons.info;
+    async logout() {
+        try {
+            await this.cloudAPI.logout();
+            this.stateManager.clearSession();
+            this.showNotification('Erfolgreich abgemeldet', 'success');
+            this.navigateTo('home');
+        } catch (error) {
+            console.error('Logout error:', error);
+            this.showNotification('Fehler beim Abmelden', 'error');
+        }
     }
 
     /**
@@ -387,7 +351,8 @@ class PiGiQuizApp {
     showLoading(message = 'Wird geladen...') {
         const overlay = document.getElementById('loading-overlay');
         if (overlay) {
-            overlay.querySelector('p').textContent = message;
+            const text = overlay.querySelector('p');
+            if (text) text.textContent = message;
             overlay.style.display = 'flex';
         }
     }
@@ -400,18 +365,18 @@ class PiGiQuizApp {
     }
 
     /**
-     * Utility Methods
+     * State Management (Legacy Compatibility)
      */
     getState() {
-        return { ...this.state };
+        return this.stateManager.getState();
     }
 
-    setState(newState) {
-        this.state = { ...this.state, ...newState };
+    setState(updates) {
+        this.stateManager.setState(updates, 'app');
     }
 
     getCurrentView() {
-        return this.currentView;
+        return this.stateManager.get('ui.currentView') || this.currentView;
     }
 
     // API access for components
@@ -421,6 +386,12 @@ class PiGiQuizApp {
 
     getRealtime() {
         return this.realtime;
+    }
+
+    // Cleanup method for proper app shutdown
+    async cleanup() {
+        console.log('🧹 Cleaning up application');
+        await this.componentManager.cleanupAll();
     }
 }
 
