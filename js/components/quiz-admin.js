@@ -17,6 +17,7 @@ export class QuizAdmin {
         this.isInitialized = false;
         this.boundEventHandlers = new Map();
         this.isLoadingQuizzes = false;
+        this.lastCopyTime = 0; // For debouncing copy operations
     }
 
     async init(params = {}) {
@@ -435,17 +436,8 @@ export class QuizAdmin {
         // Add participant form
         this.setupParticipantFormListeners();
 
-        // Copy quiz ID
-        const copyIdBtn = document.getElementById('copy-quiz-id');
-        if (copyIdBtn) {
-            copyIdBtn.onclick = () => this.copyQuizId();
-        }
-
-        // Copy join link
-        const copyLinkBtn = document.getElementById('copy-join-link');
-        if (copyLinkBtn) {
-            copyLinkBtn.onclick = () => this.copyJoinLink();
-        }
+        // Copy buttons are now handled by setupEventListeners() with proper cleanup
+        // Removed duplicate onclick bindings to prevent multiple triggers
 
         // Quiz title input
         const titleInput = document.getElementById('admin-quiz-title');
@@ -887,6 +879,13 @@ export class QuizAdmin {
 
     // Utility Methods
     copyQuizId() {
+        // Debounce to prevent multiple rapid clicks
+        const now = Date.now();
+        if (now - this.lastCopyTime < 1000) { // 1 second debounce
+            return;
+        }
+        this.lastCopyTime = now;
+
         if (!this.currentQuiz?.id) {
             this.app.showNotification('Keine Quiz-ID verfügbar', 'warning');
             return;
@@ -904,6 +903,13 @@ export class QuizAdmin {
     }
 
     copyJoinLink() {
+        // Debounce to prevent multiple rapid clicks
+        const now = Date.now();
+        if (now - this.lastCopyTime < 1000) { // 1 second debounce
+            return;
+        }
+        this.lastCopyTime = now;
+
         if (!this.currentQuiz?.id) {
             this.app.showNotification('Quiz muss zuerst gespeichert werden', 'warning');
             return;
