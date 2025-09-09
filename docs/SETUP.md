@@ -238,7 +238,7 @@ server {
 
 **Port already in use:**
 ```bash
-# Kill process on port 3000
+# Kill process on port 3002
 pkill -f "node"
 # Or use different port
 PORT=3001 npm start
