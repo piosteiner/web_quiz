@@ -28,7 +28,7 @@ class QuizMasterServer {
                         "http://localhost:3002", 
                         "http://localhost:8080",
                         "https://quiz.piogino.ch",
-                        "https://piosteiner.github.io"
+                        "http://quiz.piogino.ch"  // During testing
                     ];
                     
                     if (!origin) return callback(null, true);
@@ -66,17 +66,17 @@ class QuizMasterServer {
             crossOriginEmbedderPolicy: false
         }));
         
-        // CORS
+        // CORS - Simplified for same-origin serving
         const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
             "http://localhost:3002", 
             "http://localhost:8080",
             "https://quiz.piogino.ch",
-            "https://piosteiner.github.io"
+            "http://quiz.piogino.ch"  // During testing
         ];
         
         this.app.use(cors({
             origin: function(origin, callback) {
-                // Allow requests with no origin (like mobile apps, curl, etc.)
+                // Allow requests with no origin (same-origin requests)
                 if (!origin) return callback(null, true);
                 
                 // Check if the origin is in our allowed list

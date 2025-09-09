@@ -2,18 +2,18 @@
 const CONFIG = {
     // Dynamic server configuration based on environment
     API_BASE_URL: (() => {
-        // Production: Use nginx proxy on this server
-        if (window.location.hostname === 'quiz.piogino.ch' || window.location.hostname === 'piosteiner.github.io') {
-            return 'http://quiz.piogino.ch/api';
+        // Production: Same-origin requests (much simpler!)
+        if (window.location.hostname === 'quiz.piogino.ch') {
+            return '/api';  // Same origin, HTTPS if site is HTTPS
         }
         // Local development
         return 'http://localhost:3002/api';
     })(),
     
     WEBSOCKET_URL: (() => {
-        // Production: Use nginx proxy on this server
-        if (window.location.hostname === 'quiz.piogino.ch' || window.location.hostname === 'piosteiner.github.io') {
-            return 'ws://quiz.piogino.ch';
+        // Production: Same-origin WebSocket
+        if (window.location.hostname === 'quiz.piogino.ch') {
+            return window.location.protocol === 'https:' ? 'wss://' + window.location.host : 'ws://' + window.location.host;
         }
         // Local development
         return 'ws://localhost:3002';
