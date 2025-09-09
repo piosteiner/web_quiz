@@ -203,26 +203,27 @@ pm2 logs
 
 ### Current Production Architecture
 
-The application currently uses a simplified architecture:
+The application now uses a clean, single-server architecture:
 
-- **Frontend**: Deployed to GitHub Pages at `https://quiz.piogino.ch`
-- **Backend**: Running on cloud server at `83.228.207.199:3002`
-- **Communication**: Direct API calls from frontend to backend server
+- **Frontend & Backend**: Both served from `https://quiz.piogino.ch`
+- **Server**: Running on cloud server at `83.228.207.199:3002`
+- **Communication**: Same-origin requests (no CORS complexity)
+- **SSL**: Single Let's Encrypt certificate for entire application
 
 **Production URLs:**
-- Frontend: `https://quiz.piogino.ch` (GitHub Pages)
-- Backend API: `http://quiz.piogino.ch/api` (nginx → localhost:3002)
-- Health Check: `http://quiz.piogino.ch/api/health`
+- Application: `https://quiz.piogino.ch` (Frontend + API)
+- API Health: `https://quiz.piogino.ch/api/health`
+- Admin Panel: `https://quiz.piogino.ch/html/admin.html`
 
 **Infrastructure:**
-- Frontend: GitHub Pages serving static files
-- Backend: PM2 process on localhost:3002
-- Nginx: Proxies quiz.piogino.ch → localhost:3002
-- Follows same pattern as other projects on this server
+- Express.js serves both static files and API endpoints
+- PM2 process management on localhost:3002
+- Nginx proxy with SSL termination
+- Single domain, single certificate, simplified deployment
 
 **Authentication:**
 - Admin Login: `admin@quiz.com` / `admin123`
-- Supports token-based authentication with automatic cleanup
+- Token-based authentication with same-origin security
 
 ## 🔒 Security Considerations
 
