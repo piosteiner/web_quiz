@@ -4,7 +4,7 @@
  */
 
 import CONFIG from './config.js';
-import CloudAPIService from './cloud-api.js';
+import CloudAPIService from './cloud-api.js?v=1.0.5';
 import realTimeService from './realtime.js';
 
 class PiGiQuizApp {
@@ -44,38 +44,13 @@ class PiGiQuizApp {
         this.setupThemeSystem();
         this.setupNotifications();
         
-        // Preload critical components to avoid timing issues
-        await this.preloadCriticalComponents();
-        
         // Check authentication status
         await this.checkAuth();
         
         // Handle initial route
         this.handleRoute();
         
-        // Set loading complete flag
-        this.isLoaded = true;
         console.log('✅ PiGi Quiz App initialized');
-    }
-
-    async preloadCriticalComponents() {
-        try {
-            console.log('📦 Preloading critical components...');
-            
-            // Preload admin and editor components since they're commonly used
-            const [QuizAdminModule, QuizEditorModule] = await Promise.all([
-                import('./components/quiz-admin.js'),
-                import('./components/quiz-editor.js')
-            ]);
-            
-            // Initialize but don't call init() yet
-            this.components.admin = new QuizAdminModule.QuizAdmin(this);
-            this.components.editor = new QuizEditorModule.QuizEditor(this);
-            
-            console.log('✅ Critical components preloaded');
-        } catch (error) {
-            console.warn('⚠️ Component preloading failed, will load on demand:', error);
-        }
     }
 
     /**
@@ -94,20 +69,16 @@ class PiGiQuizApp {
             
             if (navLink) {
                 e.preventDefault();
-                e.stopPropagation(); // Prevent other handlers
                 const route = navLink.dataset.route;
                 this.navigateTo(route);
-                return;
             }
             
             if (navButton) {
                 e.preventDefault();
-                e.stopPropagation(); // Prevent other handlers
                 const route = navButton.dataset.navigate;
                 this.navigateTo(route);
-                return;
             }
-        }, true); // Use capture phase to handle before others
+        });
     }
 
     setupNavigation() {
@@ -232,7 +203,6 @@ class PiGiQuizApp {
                     break;
                     
                 case 'admin':
-                    // Use preloaded components if available
                     if (!this.components.admin) {
                         const QuizAdminModule = await import('./components/quiz-admin.js');
                         this.components.admin = new QuizAdminModule.QuizAdmin(this);
@@ -241,14 +211,11 @@ class PiGiQuizApp {
                         const QuizEditorModule = await import('./components/quiz-editor.js');
                         this.components.editor = new QuizEditorModule.QuizEditor(this);
                     }
-                    
-                    // Initialize components
                     await this.components.admin.init(params);
                     await this.components.editor.init(params);
                     break;
                     
                 case 'quiz-admin':
-                    // Use preloaded component if available
                     if (!this.components.admin) {
                         const QuizAdminModule = await import('./components/quiz-admin.js');
                         this.components.admin = new QuizAdminModule.QuizAdmin(this);
@@ -459,96 +426,7 @@ class PiGiQuizApp {
 
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Create app instance immediately and set global reference
-    const app = new PiGiQuizApp();
-    window.PiGiQuizApp = app;
-    
-    // Set window.app immediately without property descriptor complexity
-    window.app = app;
-    console.log('✅ Global app instance created');
-    
-    // Add global error handler for button clicks when app is not ready
-    window.addEventListener('error', (event) => {
-        if (event.message.includes("can't access property") && event.message.includes('window.app')) {
-            console.warn('App not ready for button click, retrying...', event);
-            // Small delay to allow app to initialize
-            setTimeout(() => {
-                if (window.app && window.app.components) {
-                    console.log('App is now ready');
-                }
-            }, 100);
-        }
-    });
-    
-    // Add global safety check for inline handlers
-    window.safeCallApp = function(componentName, methodName, ...args) {
-        try {
-            if (window.app && window.app.components && window.app.components[componentName]) {
-                return window.app.components[componentName][methodName](...args);
-            } else {
-                console.warn(`App or component ${componentName} not ready, waiting...`);
-                // Wait for component to be ready
-                let attempts = 0;
-                const maxAttempts = 50; // 5 seconds max
-                const checkAndCall = () => {
-                    attempts++;
-                    if (window.app && window.app.components && window.app.components[componentName]) {
-                        console.log(`Component ${componentName} now ready, calling ${methodName}`);
-                        return window.app.components[componentName][methodName](...args);
-                    } else if (attempts < maxAttempts) {
-                        setTimeout(checkAndCall, 100);
-                    } else {
-                        console.error(`Component ${componentName} failed to load after ${maxAttempts * 100}ms`);
-                    }
-                };
-                setTimeout(checkAndCall, 100);
-            }
-        } catch (error) {
-            console.error(`Error calling ${componentName}.${methodName}:`, error);
-        }
-    };
-    
-    // Create a safer window.app wrapper for inline handlers
-    window.app = new Proxy(app, {
-        get(target, prop) {
-            if (prop === 'components') {
-                return new Proxy(target.components, {
-                    get(componentTarget, componentProp) {
-                        // Check if app is fully loaded
-                        if (!target.isLoaded) {
-                            console.warn(`🔄 App not fully loaded, component ${componentProp} might not be ready`);
-                            // Return a proxy that delays method calls until loaded
-                            return new Proxy({}, {
-                                get(methodTarget, methodProp) {
-                                    return (...args) => {
-                                        if (target.isLoaded) {
-                                            window.safeCallApp(componentProp, methodProp, ...args);
-                                        } else {
-                                            console.warn(`Delayed call to ${componentProp}.${methodProp} - app not ready`);
-                                        }
-                                    };
-                                }
-                            });
-                        }
-                        
-                        if (!componentTarget[componentProp]) {
-                            console.warn(`Component ${componentProp} not yet loaded`);
-                            // Return a proxy that delays method calls
-                            return new Proxy({}, {
-                                get(methodTarget, methodProp) {
-                                    return (...args) => {
-                                        window.safeCallApp(componentProp, methodProp, ...args);
-                                    };
-                                }
-                            });
-                        }
-                        return componentTarget[componentProp];
-                    }
-                });
-            }
-            return target[prop];
-        }
-    });
+    window.PiGiQuizApp = new PiGiQuizApp();
 });
 
 // Export for module use

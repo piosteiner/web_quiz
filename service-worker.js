@@ -1,9 +1,9 @@
 /**
- * Service Worker for PiGi Quiz Platform
+ const CACHE_NAME = 'pigi-quiz-v1.0.5'; Service Worker for PiGi Quiz Platform
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'pigi-quiz-v1.0.3';
+const CACHE_NAME = 'pigi-quiz-v1.0.2';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -11,15 +11,11 @@ const urlsToCache = [
     '/js/app.js',
     '/js/cloud-api.js',
     '/js/config.js',
-    '/js/realtime.js',
     '/js/pwa.js',
-    '/js/utils/security.js',
     '/js/components/quiz-admin.js',
     '/js/components/quiz-editor.js',
     '/js/components/live-controller.js',
     '/js/components/participant.js',
-    '/js/components/participant-join.js',
-    '/js/components/quiz-participant.js',
     // Add other essential assets
 ];
 
