@@ -147,6 +147,7 @@ export class Participant {
         // Answer selection
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('answer-option')) {
+                e.stopPropagation();
                 this.selectAnswer(e.target);
             }
         });
@@ -154,6 +155,7 @@ export class Participant {
         // Submit answer button
         document.addEventListener('click', (e) => {
             if (e.target.id === 'submit-answer') {
+                e.stopPropagation();
                 this.submitAnswer();
             }
         });
@@ -161,6 +163,7 @@ export class Participant {
         // Leave quiz button
         document.addEventListener('click', (e) => {
             if (e.target.id === 'leave-quiz') {
+                e.stopPropagation();
                 this.leaveQuiz();
             }
         });
@@ -168,6 +171,7 @@ export class Participant {
         // Refresh/reconnect button
         document.addEventListener('click', (e) => {
             if (e.target.id === 'reconnect-btn') {
+                e.stopPropagation();
                 this.reconnect();
             }
         });

@@ -61,7 +61,9 @@ export class QuizAdmin {
         
         // Create bound handlers to enable proper removal
         this.boundEventHandlers.set('authTabClick', (e) => {
+            // Only handle auth tab clicks, don't interfere with other buttons
             if (e.target.classList.contains('auth-tab')) {
+                e.stopPropagation(); // Prevent other handlers
                 this.switchAuthTab(e.target.dataset.tab);
             }
         });
