@@ -30,9 +30,9 @@ Edit `backend/.env`:
 ```bash
 # Basic configuration
 NODE_ENV=development
-PORT=3000
+PORT=3002
 SESSION_SECRET=your-development-secret-key
-ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+ALLOWED_ORIGINS=http://localhost:3002,http://127.0.0.1:3002
 
 # Optional: Database (uses file-based storage by default)
 # DATABASE_URL=your-database-url
@@ -48,9 +48,9 @@ npm run production
 ```
 
 ### 4. Access the Application
-- **Frontend**: http://localhost:3000
-- **Admin Panel**: http://localhost:3000/html/admin.html
-- **API**: http://localhost:3000/api/health
+- **Frontend**: http://localhost:3002
+- **Admin Panel**: http://localhost:3002/html/admin.html
+- **API**: http://localhost:3002/api/health
 
 ## 📁 Project Structure Deep Dive
 
@@ -117,12 +117,12 @@ web_quiz/
 
 | Component | URL | Description |
 |-----------|-----|-------------|
-| **Landing Page** | http://localhost:3000 | Main application entry |
-| **Admin Panel** | http://localhost:3000/html/admin.html | Create/manage quizzes |
-| **Join Quiz** | http://localhost:3000/html/join.html | Participant interface |
-| **Live Control** | http://localhost:3000/html/live-control.html | Real-time quiz control |
-| **API Health** | http://localhost:3000/api/health | Server status check |
-| **API Docs** | http://localhost:3000/api/docs | API documentation |
+| **Landing Page** | http://localhost:3002 | Main application entry |
+| **Admin Panel** | http://localhost:3002/html/admin.html | Create/manage quizzes |
+| **Join Quiz** | http://localhost:3002/html/join.html | Participant interface |
+| **Live Control** | http://localhost:3002/html/live-control.html | Real-time quiz control |
+| **API Health** | http://localhost:3002/api/health | Server status check |
+| **API Docs** | http://localhost:3002/api/docs | API documentation |
 
 ## 🔌 API Endpoints
 
@@ -183,7 +183,7 @@ npm run test:frontend
 ```bash
 # Production environment variables
 NODE_ENV=production
-PORT=3000
+PORT=3002
 SESSION_SECRET=strong-production-secret
 ALLOWED_ORIGINS=https://yourdomain.com
 ```
@@ -208,7 +208,7 @@ server {
     server_name yourdomain.com;
     
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3002;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';

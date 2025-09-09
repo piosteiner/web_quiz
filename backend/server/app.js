@@ -25,7 +25,7 @@ class QuizMasterServer {
             cors: {
                 origin: function(origin, callback) {
                     const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-                        "http://localhost:3000", 
+                        "http://localhost:3002", 
                         "http://localhost:8080",
                         "https://quiz.piogino.ch",
                         "https://quiz-backend.piogino.ch"
@@ -43,7 +43,7 @@ class QuizMasterServer {
             }
         });
         
-        this.port = process.env.PORT || 3000;
+        this.port = process.env.PORT || 3002;
         
         // Initialize managers
         this.quizManager = new QuizManager();
@@ -68,7 +68,7 @@ class QuizMasterServer {
         
         // CORS
         const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-            "http://localhost:3000", 
+            "http://localhost:3002", 
             "http://localhost:8080",
             "https://quiz.piogino.ch",
             "https://quiz-backend.piogino.ch"

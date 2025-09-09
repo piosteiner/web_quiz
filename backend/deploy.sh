@@ -162,15 +162,15 @@ health_check() {
         fi
         
         # Check if port is listening
-        if netstat -tlnp | grep -q ":3000.*LISTEN"; then
-            success "Application is listening on port 3000"
+        if netstat -tlnp | grep -q ":3002.*LISTEN"; then
+            success "Application is listening on port 3002"
         else
-            error "Application is not listening on port 3000"
+            error "Application is not listening on port 3002"
         fi
         
         # Check API endpoint
         sleep 5
-        if curl -f -s http://localhost:3000/api/health > /dev/null; then
+        if curl -f -s http://localhost:3002/api/health > /dev/null; then
             success "API health check passed"
         else
             warning "API health check failed - check application logs"
@@ -199,8 +199,8 @@ show_status() {
         echo "  pm2 reload $APP_NAME"
         echo ""
         echo "🌐 Application:"
-        echo "  Local: http://localhost:3000"
-        echo "  API: http://localhost:3000/api/health"
+        echo "  Local: http://localhost:3002"
+        echo "  API: http://localhost:3002/api/health"
         echo ""
     else
         echo ""
@@ -210,7 +210,7 @@ show_status() {
         echo "   npm run dev"
         echo ""
         echo "🧪 Test interface:"
-        echo "   http://localhost:3000/test.html"
+        echo "   http://localhost:3002/test.html"
         echo ""
     fi
     
