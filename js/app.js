@@ -430,13 +430,12 @@ class PiGiQuizApp {
 
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Create app instance immediately
+    // Create app instance immediately and set global reference
     const app = new PiGiQuizApp();
-    
-    // Set global references
     window.PiGiQuizApp = app;
-    window.app = app; // For easier access from inline handlers
     
+    // Set window.app immediately without property descriptor complexity
+    window.app = app;
     console.log('✅ Global app instance created');
     
     // Add global error handler for button clicks when app is not ready
@@ -458,27 +457,50 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.app && window.app.components && window.app.components[componentName]) {
                 return window.app.components[componentName][methodName](...args);
             } else {
-                console.warn(`App or component ${componentName} not ready, queuing call`);
-                setTimeout(() => window.safeCallApp(componentName, methodName, ...args), 100);
+                console.warn(`App or component ${componentName} not ready, waiting...`);
+                // Wait for component to be ready
+                let attempts = 0;
+                const maxAttempts = 50; // 5 seconds max
+                const checkAndCall = () => {
+                    attempts++;
+                    if (window.app && window.app.components && window.app.components[componentName]) {
+                        console.log(`Component ${componentName} now ready, calling ${methodName}`);
+                        return window.app.components[componentName][methodName](...args);
+                    } else if (attempts < maxAttempts) {
+                        setTimeout(checkAndCall, 100);
+                    } else {
+                        console.error(`Component ${componentName} failed to load after ${maxAttempts * 100}ms`);
+                    }
+                };
+                setTimeout(checkAndCall, 100);
             }
         } catch (error) {
             console.error(`Error calling ${componentName}.${methodName}:`, error);
         }
     };
     
-    // Override window.app access to provide better error handling
-    let _app = null;
-    Object.defineProperty(window, 'app', {
-        get: function() {
-            if (!_app) {
-                console.warn('window.app accessed before initialization');
-                return null;
+    // Create a safer window.app wrapper for inline handlers
+    window.app = new Proxy(app, {
+        get(target, prop) {
+            if (prop === 'components') {
+                return new Proxy(target.components, {
+                    get(componentTarget, componentProp) {
+                        if (!componentTarget[componentProp]) {
+                            console.warn(`Component ${componentProp} not yet loaded`);
+                            // Return a proxy that delays method calls
+                            return new Proxy({}, {
+                                get(methodTarget, methodProp) {
+                                    return (...args) => {
+                                        window.safeCallApp(componentProp, methodProp, ...args);
+                                    };
+                                }
+                            });
+                        }
+                        return componentTarget[componentProp];
+                    }
+                });
             }
-            return _app;
-        },
-        set: function(value) {
-            _app = value;
-            console.log('✅ window.app initialized');
+            return target[prop];
         }
     });
 });
