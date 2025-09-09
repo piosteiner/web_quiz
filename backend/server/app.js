@@ -23,7 +23,12 @@ class QuizMasterServer {
         this.server = http.createServer(this.app);
         this.io = socketIo(this.server, {
             cors: {
-                origin: process.env.ALLOWED_ORIGINS?.split(',') || ["http://localhost:3000", "http://localhost:8080"],
+                origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+                    "http://localhost:3000", 
+                    "http://localhost:8080",
+                    "https://quiz.piogino.ch",
+                    "https://quiz-backend.piogino.ch"
+                ],
                 methods: ["GET", "POST", "PUT", "DELETE"],
                 credentials: true
             }
@@ -51,7 +56,12 @@ class QuizMasterServer {
         
         // CORS
         this.app.use(cors({
-            origin: process.env.ALLOWED_ORIGINS?.split(',') || ["http://localhost:3000", "http://localhost:8080"],
+            origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+                "http://localhost:3000", 
+                "http://localhost:8080",
+                "https://quiz.piogino.ch",
+                "https://quiz-backend.piogino.ch"
+            ],
             credentials: true
         }));
         

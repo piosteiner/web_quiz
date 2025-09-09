@@ -100,8 +100,8 @@ const CONFIG = {
 // Environment-specific configurations
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     // Development configuration
-    CONFIG.API_BASE_URL = 'http://localhost:3000/api';
-    CONFIG.WEBSOCKET_URL = 'http://localhost:3000';
+    CONFIG.API_BASE_URL = 'http://localhost:3002/api';
+    CONFIG.WEBSOCKET_URL = 'http://localhost:3002';
 }
 // Note: Production configuration is already set above in the dynamic functions
 
