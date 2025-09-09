@@ -87,6 +87,7 @@ export class QuizAdmin {
         });
 
         this.boundEventHandlers.set('backToListClick', () => {
+            console.log('🔙 Back to list button clicked');
             this.app.navigateTo('admin');
         });
 
@@ -177,11 +178,24 @@ export class QuizAdmin {
     }
 
     showAdminDashboard() {
+        console.log('📊 Showing admin dashboard');
+        
+        // Hide quiz admin form
+        const quizAdminView = document.getElementById('quiz-admin-view');
+        if (quizAdminView) {
+            quizAdminView.style.display = 'none';
+            console.log('🔄 Hidden quiz-admin-view');
+        }
+        
+        // Show dashboard elements
         const loginSection = document.getElementById('login-section');
         const adminDashboard = document.getElementById('admin-dashboard');
         
         if (loginSection) loginSection.style.display = 'none';
-        if (adminDashboard) adminDashboard.style.display = 'block';
+        if (adminDashboard) {
+            adminDashboard.style.display = 'block';
+            console.log('✅ Showing admin-dashboard');
+        }
         
         // Update user info
         const userName = document.getElementById('user-name');
