@@ -168,8 +168,9 @@ class PiGiQuizApp {
                         const { ParticipantJoin } = await import('./components/participant-join.js');
                         return await this.componentManager.registerComponent('participantJoin', ParticipantJoin, params);
                     } else {
-                        const { QuizParticipant } = await import('./components/quiz-participant.js');
-                        return await this.componentManager.registerComponent('join', QuizParticipant, params);
+                        // Use ParticipantJoin for general join flow
+                        const { ParticipantJoin } = await import('./components/participant-join.js');
+                        return await this.componentManager.registerComponent('join', ParticipantJoin, params);
                     }
                 },
                 'participantJoin': async () => {
@@ -182,7 +183,7 @@ class PiGiQuizApp {
                 },
                 'admin': async () => {
                     // Use unified admin component
-                    const { QuizAdmin } = await import('./components/quiz-admin.js?v=2.0.0');
+                    const { QuizAdmin } = await import('./components/quiz-admin.js?v=2.1.0');
                     const adminComponent = await this.componentManager.registerComponent('admin', QuizAdmin, params);
                     this.components.admin = adminComponent; // Legacy compatibility
                     
@@ -195,7 +196,7 @@ class PiGiQuizApp {
                 },
                 'quiz-admin': async () => {
                     // Use unified admin component
-                    const { QuizAdmin } = await import('./components/quiz-admin.js?v=2.0.0');
+                    const { QuizAdmin } = await import('./components/quiz-admin.js?v=2.1.0');
                     const component = await this.componentManager.registerComponent('admin', QuizAdmin, params);
                     this.components.admin = component; // Legacy compatibility
                     return component;

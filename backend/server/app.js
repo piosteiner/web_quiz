@@ -57,11 +57,6 @@ class QuizMasterServer {
     }
 
     setupMiddleware() {
-        // Trust proxy for production environments (needed for rate limiting)
-        if (process.env.NODE_ENV === 'production') {
-            this.app.set('trust proxy', 1);
-        }
-        
         // Security middleware
         this.app.use(helmet({
             contentSecurityPolicy: false, // Disable for development
@@ -96,13 +91,10 @@ class QuizMasterServer {
         
         // Handle preflight requests explicitly
         this.app.options('*', (req, res) => {
-            const origin = req.headers.origin;
-            if (allowedOrigins.includes(origin)) {
-                res.header('Access-Control-Allow-Origin', origin);
-                res.header('Access-Control-Allow-Credentials', 'true');
-                res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-                res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-            }
+            res.header('Access-Control-Allow-Origin', req.headers.origin);
+            res.header('Access-Control-Allow-Credentials', 'true');
+            res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
             res.sendStatus(200);
         });
         
@@ -116,20 +108,8 @@ class QuizMasterServer {
         this.app.use(express.json({ limit: '10mb' }));
         this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
         
-        // Rate limiting with error handling (can be disabled with DISABLE_RATE_LIMIT=true)
-        if (!process.env.DISABLE_RATE_LIMIT) {
-            this.app.use('/api/', (req, res, next) => {
-                try {
-                    rateLimiter(req, res, next);
-                } catch (error) {
-                    logger.error('Rate limiter error:', error);
-                    // Continue without rate limiting if there's an error
-                    next();
-                }
-            });
-        } else {
-            logger.warn('Rate limiting is DISABLED by environment variable');
-        }
+        // Rate limiting
+        this.app.use('/api/', rateLimiter);
         
         // Static files - serve from project root
         const staticPath = path.join(__dirname, '../../');  // Up two levels to project root
@@ -146,9 +126,11 @@ class QuizMasterServer {
         const createQuizRoutes = require('./routes/quizzes');
         const createSessionRoutes = require('./routes/sessions');
         const createParticipantRoutes = require('./routes/participants');
+        const createAuthRoutes = require('./routes/auth');
         const healthRoutes = require('./routes/health');
         
         // API Routes
+        this.app.use('/api/auth', createAuthRoutes());
         this.app.use('/api/quizzes', createQuizRoutes(this.quizManager));
         this.app.use('/api/sessions', createSessionRoutes(this.sessionManager, this.quizManager));
         this.app.use('/api/participants', createParticipantRoutes(this.sessionManager));

@@ -3,7 +3,7 @@
  * Extends BaseComponent for proper lifecycle management
  */
 
-import { BaseComponent } from '../core/component-manager.js';
+import { BaseComponent } from '../utils/base-component.js';
 
 export class QuizAdmin extends BaseComponent {
     constructor(app) {
