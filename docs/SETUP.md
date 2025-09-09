@@ -210,14 +210,15 @@ The application currently uses a simplified architecture:
 - **Communication**: Direct API calls from frontend to backend server
 
 **Production URLs:**
-- Frontend: `https://quiz.piogino.ch`
-- Backend API: `http://83.228.207.199:3002/api`
-- Health Check: `http://83.228.207.199:3002/api/health`
+- Frontend: `https://quiz.piogino.ch` (GitHub Pages)
+- Backend API: `http://quiz.piogino.ch/api` (nginx → localhost:3002)
+- Health Check: `http://quiz.piogino.ch/api/health`
 
 **Infrastructure:**
-- No nginx proxy required - frontend connects directly to backend
-- Backend runs on PM2 for process management
-- Uses existing server infrastructure alongside other projects
+- Frontend: GitHub Pages serving static files
+- Backend: PM2 process on localhost:3002
+- Nginx: Proxies quiz.piogino.ch → localhost:3002
+- Follows same pattern as other projects on this server
 
 **Authentication:**
 - Admin Login: `admin@quiz.com` / `admin123`

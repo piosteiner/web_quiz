@@ -2,18 +2,18 @@
 const CONFIG = {
     // Dynamic server configuration based on environment
     API_BASE_URL: (() => {
-        // Production: Use this server's backend
+        // Production: Use nginx proxy on this server
         if (window.location.hostname === 'quiz.piogino.ch' || window.location.hostname === 'piosteiner.github.io') {
-            return 'http://83.228.207.199:3002/api';
+            return 'http://quiz.piogino.ch/api';
         }
         // Local development
         return 'http://localhost:3002/api';
     })(),
     
     WEBSOCKET_URL: (() => {
-        // Production: Use this server's WebSocket
+        // Production: Use nginx proxy on this server
         if (window.location.hostname === 'quiz.piogino.ch' || window.location.hostname === 'piosteiner.github.io') {
-            return 'ws://83.228.207.199:3002';
+            return 'ws://quiz.piogino.ch';
         }
         // Local development
         return 'ws://localhost:3002';
