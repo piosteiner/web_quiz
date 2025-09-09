@@ -123,7 +123,7 @@ export class QuizAdmin extends BaseComponent {
 
         try {
             this.app.showLoading('Anmeldung läuft...');
-            const user = await this.app.cloudAPI.login(email, password);
+            const user = await this.api.login(email, password);
             
             this.app.stateManager.setState({ user }, 'login');
             this.notify('Erfolgreich angemeldet', 'success');

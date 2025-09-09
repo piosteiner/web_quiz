@@ -193,6 +193,17 @@ export class BaseComponent {
     }
 
     /**
+     * Show notification message (alias for showSuccess/showError)
+     */
+    notify(message, type = 'info', duration = 3000) {
+        if (type === 'error') {
+            this.showError(message, duration);
+        } else {
+            this.showSuccess(message, duration);
+        }
+    }
+
+    /**
      * Update component view - override in subclasses
      */
     render(data) {

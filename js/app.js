@@ -4,7 +4,7 @@
  */
 
 import CONFIG from './config.js';
-import API from './api.js?v=2.1.0';
+import API from './api.js?v=2.1.5';
 import realTimeService from './realtime.js';
 import { ComponentManager } from './core/component-manager.js';
 import { StateManager } from './core/state-manager.js';
