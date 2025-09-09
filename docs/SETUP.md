@@ -218,6 +218,23 @@ server {
 }
 ```
 
+### Current Production Architecture
+
+The application currently uses a simplified architecture:
+
+- **Frontend**: Deployed to GitHub Pages at `https://quiz.piogino.ch`
+- **Backend**: Running on cloud server at `83.228.207.199:3002`
+- **Communication**: Direct API calls from frontend to backend server
+
+**Production URLs:**
+- Frontend: `https://quiz.piogino.ch`
+- Backend API: `http://83.228.207.199:3002/api`
+- Health Check: `http://83.228.207.199:3002/api/health`
+
+**Authentication:**
+- Admin Login: `admin@quiz.com` / `admin123`
+- Supports token-based authentication with automatic cleanup
+
 ## 🔒 Security Considerations
 
 ### Development
