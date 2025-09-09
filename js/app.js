@@ -171,12 +171,12 @@ class PiGiQuizApp {
                     
                 case 'admin':
                     if (!this.components.admin) {
-                        const { QuizAdmin } = await import('./components/quiz-admin.js');
-                        this.components.admin = new QuizAdmin(this);
+                        const QuizAdminModule = await import('./components/quiz-admin.js');
+                        this.components.admin = new QuizAdminModule.QuizAdmin(this);
                     }
                     if (!this.components.editor) {
-                        const { QuizEditor } = await import('./components/quiz-editor.js');
-                        this.components.editor = new QuizEditor(this);
+                        const QuizEditorModule = await import('./components/quiz-editor.js');
+                        this.components.editor = new QuizEditorModule.QuizEditor(this);
                     }
                     await this.components.admin.init(params);
                     await this.components.editor.init(params);

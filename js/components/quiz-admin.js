@@ -9,7 +9,12 @@ export class QuizAdmin {
         this.cloudAPI = app.getCloudAPI();
         
         this.quizzes = [];
+        this.currentQuiz = null;
+        this.currentQuestions = [];
         this.isAuthenticated = false;
+        this.isEditing = false;
+        this.draggedQuestion = null;
+        this.autoSaveTimeout = null;
     }
 
     async init(params = {}) {
@@ -65,6 +70,54 @@ export class QuizAdmin {
         
         confirmPassword?.addEventListener('input', () => {
             this.validatePasswordMatch();
+        });
+
+        // Setup quiz editor listeners
+        this.setupQuizEditorListeners();
+    }
+
+    setupQuizEditorListeners() {
+        // Back to list button
+        const backToListBtn = document.getElementById('back-to-list');
+        backToListBtn?.addEventListener('click', () => {
+            this.showQuizList();
+        });
+
+        // Save quiz button
+        const saveQuizBtn = document.getElementById('save-quiz');
+        saveQuizBtn?.addEventListener('click', () => {
+            this.saveCurrentQuiz();
+        });
+
+        // Preview quiz button
+        const previewQuizBtn = document.getElementById('preview-quiz');
+        previewQuizBtn?.addEventListener('click', () => {
+            this.previewQuiz();
+        });
+
+        // Publish quiz button
+        const publishQuizBtn = document.getElementById('publish-quiz');
+        publishQuizBtn?.addEventListener('click', () => {
+            this.publishQuiz();
+        });
+
+        // Add question button
+        const addQuestionBtn = document.getElementById('add-question');
+        addQuestionBtn?.addEventListener('click', () => {
+            this.addNewQuestion();
+        });
+
+        // Quiz title input
+        const quizTitleInput = document.getElementById('quiz-title');
+        quizTitleInput?.addEventListener('input', () => {
+            this.updateQuizTitle();
+        });
+
+        // Auto-save functionality
+        document.addEventListener('input', (e) => {
+            if (this.isEditing && e.target.closest('.quiz-editor')) {
+                this.scheduleAutoSave();
+            }
         });
     }
 
@@ -281,7 +334,11 @@ export class QuizAdmin {
     // Quiz Management Methods
     createNewQuiz() {
         // Open quiz editor with new quiz
-        this.app.components.editor.openEditor(null);
+        if (this.app.components.editor) {
+            this.app.components.editor.openEditor(null);
+        } else {
+            console.error('Quiz editor component not loaded');
+        }
     }
 
     editQuiz(quizId) {
@@ -292,7 +349,126 @@ export class QuizAdmin {
         }
         
         // Open quiz editor with existing quiz
-        this.app.components.editor.openEditor(quiz);
+        if (this.app.components.editor) {
+            this.app.components.editor.openEditor(quiz);
+        } else {
+            console.error('Quiz editor component not loaded');
+        }
+    }
+
+    // Editor delegation methods for backward compatibility
+    showQuizEditor() {
+        if (this.app.components.editor) {
+            this.app.components.editor.showEditor();
+        }
+    }
+
+    populateQuizEditor() {
+        if (this.app.components.editor) {
+            this.app.components.editor.populateEditor();
+        }
+    }
+
+    addNewQuestion() {
+        if (this.app.components.editor) {
+            this.app.components.editor.addNewQuestion();
+        }
+    }
+
+    renderQuestions() {
+        if (this.app.components.editor) {
+            this.app.components.editor.renderQuestions();
+        }
+    }
+
+    toggleQuestion(questionId) {
+        if (this.app.components.editor) {
+            this.app.components.editor.toggleQuestion(questionId);
+        }
+    }
+
+    updateQuestionText(questionId, text) {
+        if (this.app.components.editor) {
+            this.app.components.editor.updateQuestionText(questionId, text);
+        }
+    }
+
+    toggleCorrectAnswer(questionId, answerId) {
+        if (this.app.components.editor) {
+            this.app.components.editor.toggleCorrectAnswer(questionId, answerId);
+        }
+    }
+
+    updateAnswerText(questionId, answerId, text) {
+        if (this.app.components.editor) {
+            this.app.components.editor.updateAnswerText(questionId, answerId, text);
+        }
+    }
+
+    addAnswer(questionId) {
+        if (this.app.components.editor) {
+            this.app.components.editor.addAnswer(questionId);
+        }
+    }
+
+    deleteAnswer(questionId, answerId) {
+        if (this.app.components.editor) {
+            this.app.components.editor.deleteAnswer(questionId, answerId);
+        }
+    }
+
+    duplicateQuestion(questionId) {
+        if (this.app.components.editor) {
+            this.app.components.editor.duplicateQuestion(questionId);
+        }
+    }
+
+    deleteQuestion(questionId) {
+        if (this.app.components.editor) {
+            this.app.components.editor.deleteQuestion(questionId);
+        }
+    }
+
+    updateQuestionTimeLimit(questionId, timeLimit) {
+        if (this.app.components.editor) {
+            this.app.components.editor.updateQuestionTimeLimit(questionId, timeLimit);
+        }
+    }
+
+    updateQuestionPoints(questionId, points) {
+        if (this.app.components.editor) {
+            this.app.components.editor.updateQuestionPoints(questionId, points);
+        }
+    }
+
+    updateQuizTitle() {
+        if (this.app.components.editor) {
+            this.app.components.editor.updateQuizTitle();
+        }
+    }
+
+    saveCurrentQuiz() {
+        if (this.app.components.editor) {
+            this.app.components.editor.saveCurrentQuiz();
+        }
+    }
+
+    publishQuiz() {
+        if (this.app.components.editor) {
+            this.app.components.editor.publishQuiz();
+        }
+    }
+
+    previewQuiz() {
+        if (this.app.components.editor) {
+            this.app.components.editor.previewQuiz();
+        }
+    }
+
+    scheduleAutoSave() {
+        if (this.app.components.editor) {
+            this.app.components.editor.scheduleAutoSave();
+        }
     }
 
     showQuizList() {
