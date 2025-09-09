@@ -1,25 +1,22 @@
 /**
  * Quiz Editor Component
- * Handles quiz questions, answers, and quiz settings
+ * Handles quiz creation and editing with participant management
  */
 
-import { escapeHTML, validateQuestionText } from '../utils/security.js';
+import { BaseComponent } from '../utils/base-component.js';
+import { getAnswerLetter, Templates, escapeHTML, validateQuestionText } from '../utils/index.js';
 
-export class QuizEditor {
+export class QuizEditor extends BaseComponent {
     constructor(app) {
-        this.app = app;
-        this.cloudAPI = app.getCloudAPI();
+        super(app);
         
         this.currentQuiz = null;
-        this.currentQuestions = [];
-        this.isEditing = false;
-        this.draggedQuestion = null;
-        this.autoSaveTimeout = null;
-        this.hasUnsavedChanges = false;
-        this.isInitialized = false;
+        this.questionsCount = 0;
+        this.participantsCount = 0;
+        this.editingQuestionId = null;
     }
 
-    async init(params = {}) {
+    async onInit(params = {}) {
         console.log('📝 Initializing Quiz Editor');
         
         // Prevent multiple initializations
@@ -620,7 +617,7 @@ export class QuizEditor {
                     ${question.answers.map((answer, answerIndex) => `
                         <div class="answer-item ${answer.correct ? 'correct' : ''}" data-answer-id="${answer.id}">
                             <div class="answer-label-input" onclick="window.app.components.editor.toggleCorrectAnswer('${question.id}', '${answer.id}')">
-                                ${String.fromCharCode(65 + answerIndex)}
+                                ${getAnswerLetter(answerIndex)}
                             </div>
                             <input 
                                 type="text" 
@@ -756,7 +753,7 @@ export class QuizEditor {
     addAnswer(questionId) {
         const question = this.currentQuestions.find(q => q.id === questionId);
         if (question && question.answers.length < 6) {
-            const nextLetter = String.fromCharCode(65 + question.answers.length);
+            const nextLetter = getAnswerLetter(question.answers.length);
             const newAnswer = {
                 id: nextLetter.toLowerCase(),
                 text: '',
@@ -1026,7 +1023,7 @@ export class QuizEditor {
                             <div class="quiz-preview-answers">
                                 ${question.answers.map((answer, answerIndex) => `
                                     <div class="quiz-preview-answer ${answer.correct ? 'correct' : ''}">
-                                        <span class="answer-letter">${String.fromCharCode(65 + answerIndex)}</span>
+                                        <span class="answer-letter">${getAnswerLetter(answerIndex)}</span>
                                         <span>${escapeHTML(answer.text)}</span>
                                         ${answer.correct ? '<i class="fas fa-check" style="margin-left: auto;"></i>' : ''}
                                     </div>

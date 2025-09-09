@@ -4,6 +4,7 @@
  */
 
 import { BaseComponent } from '../utils/base-component.js';
+import { getAnswerLetter, Templates } from '../utils/index.js';
 
 export class LiveController extends BaseComponent {
     constructor(app) {
@@ -470,7 +471,7 @@ export class LiveController extends BaseComponent {
         if (answersContainer) {
             answersContainer.innerHTML = question.answers.map((answer, index) => `
                 <div class="preview-answer ${answer.correct ? 'correct' : ''}">
-                    <span class="answer-letter">${String.fromCharCode(65 + index)}</span>
+                    <span class="answer-letter">${getAnswerLetter(index)}</span>
                     <span class="answer-text">${answer.text}</span>
                     ${answer.correct ? '<i class="fas fa-check"></i>' : ''}
                 </div>

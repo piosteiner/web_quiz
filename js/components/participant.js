@@ -3,13 +3,12 @@
  * Handles the participant interface during live quiz sessions
  */
 
-import { escapeHTML } from '../utils/security.js';
+import { BaseComponent } from '../utils/base-component.js';
+import { getAnswerLetter, Templates, escapeHTML } from '../utils/index.js';
 
-export class Participant {
+export class Participant extends BaseComponent {
     constructor(app) {
-        this.app = app;
-        this.cloudAPI = app.getCloudAPI();
-        this.realtime = app.realtime;
+        super(app);
         
         this.currentQuiz = null;
         this.participant = null;
@@ -25,7 +24,7 @@ export class Participant {
         this.websocketConnected = false;
     }
 
-    async init(params = {}) {
+    async onInit(params = {}) {
         console.log('👥 Initializing Participant Interface');
         
         this.currentQuiz = params.quiz;
@@ -147,7 +146,6 @@ export class Participant {
         // Answer selection
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('answer-option')) {
-                e.stopPropagation();
                 this.selectAnswer(e.target);
             }
         });
@@ -155,7 +153,6 @@ export class Participant {
         // Submit answer button
         document.addEventListener('click', (e) => {
             if (e.target.id === 'submit-answer') {
-                e.stopPropagation();
                 this.submitAnswer();
             }
         });
@@ -163,7 +160,6 @@ export class Participant {
         // Leave quiz button
         document.addEventListener('click', (e) => {
             if (e.target.id === 'leave-quiz') {
-                e.stopPropagation();
                 this.leaveQuiz();
             }
         });
@@ -171,7 +167,6 @@ export class Participant {
         // Refresh/reconnect button
         document.addEventListener('click', (e) => {
             if (e.target.id === 'reconnect-btn') {
-                e.stopPropagation();
                 this.reconnect();
             }
         });
@@ -297,7 +292,7 @@ export class Participant {
                         <div class="answers-container">
                             ${question.answers.map((answer, index) => `
                                 <button class="answer-option" data-answer-id="${answer.id}" data-answer-index="${index}">
-                                    <span class="answer-letter">${String.fromCharCode(65 + index)}</span>
+                                    <span class="answer-letter">${getAnswerLetter(index)}</span>
                                     <span class="answer-text">${escapeHTML(answer.text)}</span>
                                 </button>
                             `).join('')}
@@ -943,7 +938,7 @@ export class Participant {
                     <div class="answers-container">
                         ${this.currentQuestion.answers.map((answer, index) => `
                             <button class="answer-option" data-answer-id="${answer.id}">
-                                <span class="answer-letter">${String.fromCharCode(65 + index)}</span>
+                                <span class="answer-letter">${getAnswerLetter(index)}</span>
                                 <span class="answer-text">${escapeHTML(answer.text)}</span>
                             </button>
                         `).join('')}
@@ -996,7 +991,7 @@ export class Participant {
 
     async submitAnswerToServer(answer) {
         try {
-            const response = await this.cloudAPI.submitAnswer({
+            const response = await this.api.submitAnswer({
                 quizId: this.currentQuiz.id,
                 participantId: this.participant.participantId,
                 ...answer
