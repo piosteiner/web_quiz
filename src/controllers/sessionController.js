@@ -1,8 +1,8 @@
 // Session Manager - Handles live quiz sessions and participant management
 const { v4: uuidv4 } = require('uuid');
-const logger = require('./utils/logger');
+const logger = require('../utils/logger');
 
-class SessionManager {
+class SessionController {
     constructor() {
         // In-memory storage for sessions
         this.sessions = new Map();
@@ -366,4 +366,4 @@ class SessionManager {
     }
 }
 
-module.exports = SessionManager;
+module.exports = SessionController;

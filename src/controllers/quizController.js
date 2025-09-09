@@ -1,8 +1,8 @@
 // Quiz Manager - Handles quiz CRUD operations and business logic
 const { v4: uuidv4 } = require('uuid');
-const logger = require('./utils/logger');
+const logger = require('../utils/logger');
 
-class QuizManager {
+class QuizController {
     constructor() {
         // In-memory storage for demo (replace with database in production)
         this.quizzes = new Map();
@@ -240,4 +240,4 @@ class QuizManager {
     }
 }
 
-module.exports = QuizManager;
+module.exports = QuizController;

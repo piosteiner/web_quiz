@@ -54,58 +54,69 @@ npm run production
 - **Admin Panel**: http://localhost:3002/html/admin.html
 - **API**: http://localhost:3002/api/health
 
-## 📁 Project Structure
+## 📁 Professional Project Structure
 
 ```
 quiz-platform/
-├── 🌐 Frontend Files
-│   ├── index.html              # Landing page
-│   ├── css/                    # Stylesheets
-│   │   ├── spa.css            # Main styles
-│   │   └── components/        # Component-specific styles
-│   └── js/                     # Frontend JavaScript
-│       ├── api.js              # API communication
-│       ├── config.js           # Environment configuration
-│       ├── components/         # UI components
-│       └── utils/              # Shared utilities
-├── ⚙️ Server (Backend)
-│   ├── app.js                  # Main Express application
-│   ├── quiz-manager.js         # Quiz logic and storage
-│   ├── session-manager.js      # Live session handling
-│   ├── websocket-handler.js    # Real-time communication
-│   ├── routes/                 # API route handlers
-│   │   ├── quizzes.js         # Quiz CRUD operations
-│   │   ├── sessions.js        # Session management
-│   │   └── participants.js    # Participant handling
-│   ├── middleware/             # Express middleware
-│   │   ├── auth.js            # Authentication
-│   │   ├── rate-limiter.js    # API rate limiting
-│   │   └── error-handler.js   # Global error handling
-│   └── utils/                  # Server utilities
+├── 📱 Frontend (Public Assets)
+│   └── public/                 # Static files served to browsers
+│       ├── index.html          # Main application page
+│       ├── js/                 # Frontend JavaScript
+│       │   ├── api.js          # API communication layer
+│       │   ├── config.js       # Environment configuration
+│       │   ├── components/     # UI components
+│       │   ├── core/           # Core application logic
+│       │   └── utils/          # Frontend utilities
+│       ├── css/                # Stylesheets and UI assets
+│       │   ├── spa.css         # Main application styles
+│       │   └── icons/          # Icon assets
+│       ├── favicon.ico         # Site favicon
+│       └── service-worker.js   # PWA service worker
+├── 🔧 Backend (Source Code)
+│   └── src/                    # Server application source
+│       ├── app.js              # Main Express application
+│       ├── controllers/        # Business logic controllers
+│       │   ├── quizController.js      # Quiz management
+│       │   ├── sessionController.js   # Live session handling
+│       │   └── websocketController.js # Real-time communication
+│       ├── routes/             # API route definitions
+│       │   ├── quizzes.js      # Quiz CRUD endpoints
+│       │   ├── sessions.js     # Session management
+│       │   ├── participants.js # Participant handling
+│       │   ├── auth.js         # Authentication routes
+│       │   └── health.js       # Health check endpoint
+│       ├── middleware/         # Express middleware
+│       │   ├── auth.js         # Authentication middleware
+│       │   ├── rate-limiter.js # API rate limiting
+│       │   └── error-handler.js # Global error handling
+│       ├── models/             # Data models (future use)
+│       └── utils/              # Server utilities
+│           └── logger.js       # Logging utility
 ├── 📊 Runtime Data (gitignored)
-│   ├── data/                   # Quiz and session storage
+│   ├── data/                   # Application data storage
 │   ├── logs/                   # Application logs
-│   └── uploads/                # File uploads
+│   └── uploads/                # File upload storage
 ├── ⚙️ Configuration
-│   ├── package.json            # Dependencies
-│   ├── ecosystem.config.js     # PM2 configuration
+│   ├── package.json            # Project dependencies
+│   ├── ecosystem.config.js     # PM2 process management
 │   ├── .env                    # Environment variables
-│   └── nginx-quiz-platform.conf # Nginx proxy config
+│   └── .gitignore              # Git ignore rules
 └── 📚 Documentation
-    ├── docs/SETUP.md           # This file
-    └── README.md               # Project overview
+    ├── docs/SETUP.md           # This setup guide
+    ├── README.md               # Project overview
+    └── LICENSE                 # License information
 ```
 
 ## 🔧 Development Workflow
 
 ### Frontend Development
-1. **Edit Files**: Modify HTML, CSS, JS in the root directory
+1. **Edit Files**: Modify HTML, CSS, JS in the `public/` directory
 2. **Live Reload**: The server serves frontend files directly
 3. **Test Changes**: Refresh browser to see updates
 4. **Debug**: Use browser developer tools
 
 ### Backend Development
-1. **Edit Server Code**: Modify files in `server/`
+1. **Edit Server Code**: Modify files in `src/`
 2. **Restart Server**: Use `npm run dev` for auto-restart with nodemon
 3. **Test API**: Use tools like Postman or curl
 4. **Check Logs**: Monitor console output or `logs/` directory

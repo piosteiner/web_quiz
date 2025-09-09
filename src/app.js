@@ -10,9 +10,9 @@ const path = require('path');
 require('dotenv').config();
 
 // Import custom modules
-const QuizManager = require('./quiz-manager');
-const SessionManager = require('./session-manager');
-const WebSocketHandler = require('./websocket-handler');
+const QuizController = require('./controllers/quizController');
+const SessionController = require('./controllers/sessionController');
+const WebSocketController = require('./controllers/websocketController');
 const logger = require('./utils/logger');
 const rateLimiter = require('./middleware/rate-limiter');
 const errorHandler = require('./middleware/error-handler');
@@ -45,10 +45,10 @@ class QuizMasterServer {
         
         this.port = process.env.PORT || 3002;
         
-        // Initialize managers
-        this.quizManager = new QuizManager();
-        this.sessionManager = new SessionManager();
-        this.websocketHandler = new WebSocketHandler(this.io, this.sessionManager, this.quizManager);
+        // Initialize controllers
+        this.quizController = new QuizController();
+        this.sessionController = new SessionController();
+        this.websocketController = new WebSocketController(this.io, this.sessionController, this.quizController);
         
         this.setupMiddleware();
         this.setupRoutes();
@@ -114,8 +114,8 @@ class QuizMasterServer {
         // Rate limiting
         this.app.use('/api/', rateLimiter);
         
-        // Static files - serve from project root  
-        const staticPath = path.join(__dirname, '../');  // Up one level to project root
+        // Static files - serve from public directory
+        const staticPath = path.join(__dirname, '../public');
         
         this.app.use(express.static(staticPath, {
             maxAge: process.env.NODE_ENV === 'production' ? '1y' : '0',
@@ -134,9 +134,9 @@ class QuizMasterServer {
         
         // API Routes
         this.app.use('/api/auth', createAuthRoutes());
-        this.app.use('/api/quizzes', createQuizRoutes(this.quizManager));
-        this.app.use('/api/sessions', createSessionRoutes(this.sessionManager, this.quizManager));
-        this.app.use('/api/participants', createParticipantRoutes(this.sessionManager));
+        this.app.use('/api/quizzes', createQuizRoutes(this.quizController));
+        this.app.use('/api/sessions', createSessionRoutes(this.sessionController, this.quizController));
+        this.app.use('/api/participants', createParticipantRoutes(this.sessionController));
         this.app.use('/api/health', healthRoutes);
         
         // Serve main application

@@ -1,11 +1,11 @@
 // WebSocket Handler - Manages real-time communication for live quiz sessions
-const logger = require('./utils/logger');
+const logger = require('../utils/logger');
 
-class WebSocketHandler {
-    constructor(io, sessionManager, quizManager) {
+class WebSocketController {
+    constructor(io, sessionController, quizController) {
         this.io = io;
-        this.sessionManager = sessionManager;
-        this.quizManager = quizManager;
+        this.sessionController = sessionController;
+        this.quizController = quizController;
         this.connectedUsers = new Map(); // socketId -> user info
         this.sessionRooms = new Map(); // sessionId -> Set of socketIds
 
@@ -21,14 +21,14 @@ class WebSocketHandler {
                 try {
                     const { sessionId, participantName, participantId } = data;
                     
-                    const session = this.sessionManager.getSession(sessionId);
+                    const session = this.sessionController.getSession(sessionId);
                     if (!session) {
                         socket.emit('error', { message: 'Session not found' });
                         return;
                     }
 
                     // Add participant to session
-                    const result = this.sessionManager.addParticipant(sessionId, {
+                    const result = this.sessionController.addParticipant(sessionId, {
                         id: participantId,
                         name: participantName,
                         socketId: socket.id
@@ -75,7 +75,7 @@ class WebSocketHandler {
                 try {
                     const { sessionId, hostToken } = data;
                     
-                    const session = this.sessionManager.getSession(sessionId);
+                    const session = this.sessionController.getSession(sessionId);
                     if (!session) {
                         socket.emit('error', { message: 'Session not found' });
                         return;
@@ -100,8 +100,8 @@ class WebSocketHandler {
                     // Send full session data to host
                     socket.emit('session-joined-host', {
                         session,
-                        quiz: await this.quizManager.getQuizById(session.quizId),
-                        stats: this.sessionManager.getSessionStats(sessionId)
+                        quiz: await this.quizController.getQuizById(session.quizId),
+                        stats: this.sessionController.getSessionStats(sessionId)
                     });
 
                     logger.info(`Host joined session: ${sessionId}`);
@@ -121,7 +121,7 @@ class WebSocketHandler {
                         return;
                     }
 
-                    const session = this.sessionManager.startSession(user.sessionId);
+                    const session = this.sessionController.startSession(user.sessionId);
                     
                     // Notify all participants
                     this.io.to(user.sessionId).emit('session-started', {
@@ -145,7 +145,7 @@ class WebSocketHandler {
                         return;
                     }
 
-                    const session = this.sessionManager.pauseSession(user.sessionId);
+                    const session = this.sessionController.pauseSession(user.sessionId);
                     
                     this.io.to(user.sessionId).emit('session-paused', {
                         session: this.sanitizeSessionForParticipant(session)
@@ -166,7 +166,7 @@ class WebSocketHandler {
                         return;
                     }
 
-                    const session = this.sessionManager.resumeSession(user.sessionId);
+                    const session = this.sessionController.resumeSession(user.sessionId);
                     
                     this.io.to(user.sessionId).emit('session-resumed', {
                         session: this.sanitizeSessionForParticipant(session)
@@ -188,8 +188,8 @@ class WebSocketHandler {
                     }
 
                     const { questionIndex } = data;
-                    const session = this.sessionManager.changeQuestion(user.sessionId, questionIndex);
-                    const quiz = await this.quizManager.getQuizById(session.quizId);
+                    const session = this.sessionController.changeQuestion(user.sessionId, questionIndex);
+                    const quiz = await this.quizController.getQuizById(session.quizId);
                     
                     // Send question to participants (without correct answers)
                     const question = quiz.questions[questionIndex];
@@ -232,15 +232,15 @@ class WebSocketHandler {
                     const { questionIndex, answer } = data;
                     
                     // Submit answer
-                    const answerRecord = this.sessionManager.submitAnswer(
+                    const answerRecord = this.sessionController.submitAnswer(
                         user.sessionId, 
                         user.participantId, 
                         { questionIndex, answer, timestamp: Date.now() }
                     );
 
                     // Get quiz to check correct answer
-                    const session = this.sessionManager.getSession(user.sessionId);
-                    const quiz = await this.quizManager.getQuizById(session.quizId);
+                    const session = this.sessionController.getSession(user.sessionId);
+                    const quiz = await this.quizController.getQuizById(session.quizId);
                     const question = quiz.questions[questionIndex];
                     
                     if (question) {
@@ -252,7 +252,7 @@ class WebSocketHandler {
                         const timeBonus = Math.max(0, Math.round((maxTime - responseTime) / 100)); // Bonus points for speed
                         
                         const points = question.points || 10;
-                        const newScore = this.sessionManager.updateScore(
+                        const newScore = this.sessionController.updateScore(
                             user.sessionId, 
                             user.participantId, 
                             questionIndex, 
@@ -270,7 +270,7 @@ class WebSocketHandler {
                         });
 
                         // Update leaderboard for host
-                        const leaderboard = this.sessionManager.getLeaderboard(user.sessionId);
+                        const leaderboard = this.sessionController.getLeaderboard(user.sessionId);
                         this.io.to(`${user.sessionId}-host`).emit('leaderboard-updated', {
                             leaderboard,
                             answerSubmission: {
@@ -298,9 +298,9 @@ class WebSocketHandler {
                         return;
                     }
 
-                    const session = this.sessionManager.getSession(user.sessionId);
+                    const session = this.sessionController.getSession(user.sessionId);
                     if (session && session.config.showLeaderboard) {
-                        const leaderboard = this.sessionManager.getLeaderboard(user.sessionId);
+                        const leaderboard = this.sessionController.getLeaderboard(user.sessionId);
                         socket.emit('leaderboard', { leaderboard });
                     }
 
@@ -319,8 +319,8 @@ class WebSocketHandler {
                         return;
                     }
 
-                    const session = this.sessionManager.endSession(user.sessionId);
-                    const leaderboard = this.sessionManager.getLeaderboard(user.sessionId, 20);
+                    const session = this.sessionController.endSession(user.sessionId);
+                    const leaderboard = this.sessionController.getLeaderboard(user.sessionId, 20);
                     
                     this.io.to(user.sessionId).emit('session-ended', {
                         session: this.sanitizeSessionForParticipant(session),
@@ -342,7 +342,7 @@ class WebSocketHandler {
 
                         if (user.role === 'participant' && user.participantId) {
                             // Update participant connection status
-                            this.sessionManager.updateParticipantConnection(
+                            this.sessionController.updateParticipantConnection(
                                 user.participantId, 
                                 false
                             );
@@ -422,4 +422,4 @@ class WebSocketHandler {
     }
 }
 
-module.exports = WebSocketHandler;
+module.exports = WebSocketController;
