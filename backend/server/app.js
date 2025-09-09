@@ -113,8 +113,20 @@ class QuizMasterServer {
         this.app.use(express.json({ limit: '10mb' }));
         this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
         
-        // Rate limiting
-        this.app.use('/api/', rateLimiter);
+        // Rate limiting with error handling (can be disabled with DISABLE_RATE_LIMIT=true)
+        if (!process.env.DISABLE_RATE_LIMIT) {
+            this.app.use('/api/', (req, res, next) => {
+                try {
+                    rateLimiter(req, res, next);
+                } catch (error) {
+                    logger.error('Rate limiter error:', error);
+                    // Continue without rate limiting if there's an error
+                    next();
+                }
+            });
+        } else {
+            logger.warn('Rate limiting is DISABLED by environment variable');
+        }
         
         // Static files - serve from project root
         const staticPath = path.join(__dirname, '../../');  // Up two levels to project root

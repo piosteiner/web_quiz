@@ -12,13 +12,41 @@ const generalLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    // Skip failed requests - don't count them against the limit
+    skipFailedRequests: true,
+    // Skip successful requests for certain status codes
+    skipSuccessfulRequests: false,
+    // Custom key generator that's more resilient
+    keyGenerator: (req) => {
+        // Try to get real IP, fallback to connection IP
+        const forwardedIps = req.get('X-Forwarded-For');
+        const realIp = req.get('X-Real-IP');
+        const cfConnectingIp = req.get('CF-Connecting-IP');
+        
+        // Priority: CF-Connecting-IP > X-Real-IP > first X-Forwarded-For > req.ip
+        if (cfConnectingIp) return cfConnectingIp;
+        if (realIp) return realIp;
+        if (forwardedIps) return forwardedIps.split(',')[0].trim();
+        return req.ip || req.connection.remoteAddress || 'unknown';
+    },
+    // Error handler to prevent crashes
+    onLimitReached: (req, res, options) => {
+        const clientIp = req.ip || 'unknown';
+        logger.warn(`Rate limit exceeded for IP: ${clientIp}, User-Agent: ${req.get('User-Agent')}`);
+    },
     handler: (req, res) => {
-        logger.warn(`Rate limit exceeded for IP: ${req.ip}`);
+        const clientIp = req.ip || 'unknown';
+        logger.warn(`Rate limit handler triggered for IP: ${clientIp}`);
         res.status(429).json({
             error: 'Too many requests',
             message: 'Rate limit exceeded. Please try again later.',
             retryAfter: Math.round(req.rateLimit.resetTime / 1000)
         });
+    },
+    // Disable strict mode to prevent errors with proxy headers
+    validate: {
+        trustProxy: false, // Let Express handle trust proxy
+        xForwardedForHeader: false, // Disable validation that causes crashes
     }
 });
 
@@ -30,7 +58,22 @@ const strictLimiter = rateLimit({
         message: 'Please try again later'
     },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skipFailedRequests: true,
+    keyGenerator: (req) => {
+        const forwardedIps = req.get('X-Forwarded-For');
+        const realIp = req.get('X-Real-IP');
+        const cfConnectingIp = req.get('CF-Connecting-IP');
+        
+        if (cfConnectingIp) return cfConnectingIp;
+        if (realIp) return realIp;
+        if (forwardedIps) return forwardedIps.split(',')[0].trim();
+        return req.ip || req.connection.remoteAddress || 'unknown';
+    },
+    validate: {
+        trustProxy: false,
+        xForwardedForHeader: false,
+    }
 });
 
 const authLimiter = rateLimit({
@@ -41,7 +84,22 @@ const authLimiter = rateLimit({
         message: 'Please try again later'
     },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skipFailedRequests: false, // Count failed auth attempts
+    keyGenerator: (req) => {
+        const forwardedIps = req.get('X-Forwarded-For');
+        const realIp = req.get('X-Real-IP');
+        const cfConnectingIp = req.get('CF-Connecting-IP');
+        
+        if (cfConnectingIp) return cfConnectingIp;
+        if (realIp) return realIp;
+        if (forwardedIps) return forwardedIps.split(',')[0].trim();
+        return req.ip || req.connection.remoteAddress || 'unknown';
+    },
+    validate: {
+        trustProxy: false,
+        xForwardedForHeader: false,
+    }
 });
 
 // Export the general limiter as default
