@@ -14,12 +14,32 @@ export class QuizAdmin {
         this.currentQuiz = null;
         this.isAuthenticated = false;
         this.autoSaveTimeout = null;
+        this.isInitialized = false;
+        this.boundEventHandlers = new Map();
+        this.isLoadingQuizzes = false;
     }
 
     async init(params = {}) {
         console.log('⚙️ Initializing Quiz Admin');
         
+        // Prevent multiple initializations
+        if (this.isInitialized) {
+            console.log('📋 Quiz Admin already initialized, skipping setup');
+            // Just handle the view switch based on current state
+            if (this.app.getState().user) {
+                if (this.app.currentView === 'quiz-admin') {
+                    this.showQuizAdminForm();
+                } else {
+                    this.showAdminDashboard();
+                }
+            } else {
+                this.showLoginSection();
+            }
+            return;
+        }
+        
         this.setupEventListeners();
+        this.isInitialized = true;
         
         // Check if user is already authenticated
         if (this.app.getState().user) {
@@ -35,68 +55,105 @@ export class QuizAdmin {
     }
 
     setupEventListeners() {
-        // Auth tabs
-        document.addEventListener('click', (e) => {
+        // Clear existing listeners first
+        this.removeEventListeners();
+        
+        // Create bound handlers to enable proper removal
+        this.boundEventHandlers.set('authTabClick', (e) => {
             if (e.target.classList.contains('auth-tab')) {
                 this.switchAuthTab(e.target.dataset.tab);
             }
         });
 
-        // Login form
-        const loginForm = document.getElementById('login-form');
-        loginForm?.addEventListener('submit', (e) => {
+        this.boundEventHandlers.set('loginSubmit', (e) => {
             e.preventDefault();
             this.handleLogin();
         });
 
-        // Register form
-        const registerForm = document.getElementById('register-form');
-        registerForm?.addEventListener('submit', (e) => {
+        this.boundEventHandlers.set('registerSubmit', (e) => {
             e.preventDefault();
             this.handleRegister();
         });
 
-        // Logout button
-        const logoutBtn = document.getElementById('logout-btn');
-        logoutBtn?.addEventListener('click', () => {
+        this.boundEventHandlers.set('logoutClick', () => {
             this.handleLogout();
         });
 
-        // Create quiz button
-        const createQuizBtn = document.getElementById('create-quiz-btn');
-        createQuizBtn?.addEventListener('click', () => {
+        this.boundEventHandlers.set('createQuizClick', () => {
             this.createNewQuiz();
         });
 
-        // Quiz Admin navigation buttons
-        const backToListAdmin = document.getElementById('back-to-list-admin');
-        backToListAdmin?.addEventListener('click', () => {
+        this.boundEventHandlers.set('backToListClick', () => {
             this.app.navigateTo('admin');
         });
 
-        const openQuizEditor = document.getElementById('open-quiz-editor');
-        openQuizEditor?.addEventListener('click', () => {
-            this.app.navigateTo('admin'); // Switch to editor view within admin
+        this.boundEventHandlers.set('openEditorClick', () => {
+            this.app.navigateTo('admin');
             setTimeout(() => {
                 document.getElementById('quiz-editor-view').style.display = 'block';
                 document.getElementById('quiz-admin-view').style.display = 'none';
             }, 100);
         });
 
-        const saveQuizAdmin = document.getElementById('save-quiz-admin');
-        saveQuizAdmin?.addEventListener('click', () => {
+        this.boundEventHandlers.set('saveQuizClick', () => {
             this.saveQuizAdmin();
         });
 
-        const copyQuizId = document.getElementById('copy-quiz-id');
-        copyQuizId?.addEventListener('click', () => {
+        this.boundEventHandlers.set('copyIdClick', () => {
             this.copyQuizId();
         });
 
-        const copyJoinLink = document.getElementById('copy-join-link');
-        copyJoinLink?.addEventListener('click', () => {
+        this.boundEventHandlers.set('copyLinkClick', () => {
             this.copyJoinLink();
         });
+
+        // Add event listeners
+        document.addEventListener('click', this.boundEventHandlers.get('authTabClick'));
+
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', this.boundEventHandlers.get('loginSubmit'));
+        }
+
+        const registerForm = document.getElementById('register-form');
+        if (registerForm) {
+            registerForm.addEventListener('submit', this.boundEventHandlers.get('registerSubmit'));
+        }
+
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', this.boundEventHandlers.get('logoutClick'));
+        }
+
+        const createQuizBtn = document.getElementById('create-quiz-btn');
+        if (createQuizBtn) {
+            createQuizBtn.addEventListener('click', this.boundEventHandlers.get('createQuizClick'));
+        }
+
+        const backToListAdmin = document.getElementById('back-to-list-admin');
+        if (backToListAdmin) {
+            backToListAdmin.addEventListener('click', this.boundEventHandlers.get('backToListClick'));
+        }
+
+        const openQuizEditor = document.getElementById('open-quiz-editor');
+        if (openQuizEditor) {
+            openQuizEditor.addEventListener('click', this.boundEventHandlers.get('openEditorClick'));
+        }
+
+        const saveQuizAdmin = document.getElementById('save-quiz-admin');
+        if (saveQuizAdmin) {
+            saveQuizAdmin.addEventListener('click', this.boundEventHandlers.get('saveQuizClick'));
+        }
+
+        const copyQuizId = document.getElementById('copy-quiz-id');
+        if (copyQuizId) {
+            copyQuizId.addEventListener('click', this.boundEventHandlers.get('copyIdClick'));
+        }
+
+        const copyJoinLink = document.getElementById('copy-join-link');
+        if (copyJoinLink) {
+            copyJoinLink.addEventListener('click', this.boundEventHandlers.get('copyLinkClick'));
+        }
 
         // Password validation
         const registerPassword = document.getElementById('register-password');
@@ -240,6 +297,13 @@ export class QuizAdmin {
 
     // Quiz Management
     async loadQuizzes() {
+        // Prevent concurrent loading
+        if (this.isLoadingQuizzes) {
+            console.log('📋 Quiz loading already in progress, skipping...');
+            return;
+        }
+        
+        this.isLoadingQuizzes = true;
         this.app.showLoading('Lade Quizzes...');
         
         try {
@@ -257,6 +321,7 @@ export class QuizAdmin {
                 this.app.showNotification(`${this.quizzes.length} lokale Quizzes geladen (Backend nicht verfügbar)`, 'warning');
             }
         } finally {
+            this.isLoadingQuizzes = false;
             this.app.hideLoading();
         }
     }
@@ -1245,6 +1310,54 @@ export class QuizAdmin {
             
             this.app.hideLoading();
             this.app.showNotification('Quiz lokal gelöscht (Backend nicht verfügbar)', 'warning');
+        }
+    }
+
+    removeEventListeners() {
+        // Remove document-level listeners
+        if (this.boundEventHandlers.has('authTabClick')) {
+            document.removeEventListener('click', this.boundEventHandlers.get('authTabClick'));
+        }
+
+        // Remove form listeners
+        const loginForm = document.getElementById('login-form');
+        if (loginForm && this.boundEventHandlers.has('loginSubmit')) {
+            loginForm.removeEventListener('submit', this.boundEventHandlers.get('loginSubmit'));
+        }
+
+        const registerForm = document.getElementById('register-form');
+        if (registerForm && this.boundEventHandlers.has('registerSubmit')) {
+            registerForm.removeEventListener('submit', this.boundEventHandlers.get('registerSubmit'));
+        }
+
+        // Remove button listeners
+        const buttons = [
+            'logout-btn', 'create-quiz-btn', 'back-to-list-admin', 
+            'open-quiz-editor', 'save-quiz-admin', 'copy-quiz-id', 'copy-join-link'
+        ];
+        
+        const handlers = [
+            'logoutClick', 'createQuizClick', 'backToListClick', 
+            'openEditorClick', 'saveQuizClick', 'copyIdClick', 'copyLinkClick'
+        ];
+
+        buttons.forEach((buttonId, index) => {
+            const button = document.getElementById(buttonId);
+            const handlerKey = handlers[index];
+            if (button && this.boundEventHandlers.has(handlerKey)) {
+                button.removeEventListener('click', this.boundEventHandlers.get(handlerKey));
+            }
+        });
+    }
+
+    destroy() {
+        this.removeEventListeners();
+        this.boundEventHandlers.clear();
+        this.isInitialized = false;
+        
+        if (this.autoSaveTimeout) {
+            clearTimeout(this.autoSaveTimeout);
+            this.autoSaveTimeout = null;
         }
     }
 }
