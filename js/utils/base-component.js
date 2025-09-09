@@ -111,6 +111,13 @@ export class BaseComponent {
     }
 
     /**
+     * Add global event listener with automatic cleanup
+     */
+    addGlobalEventListener(element, event, handler, options = {}) {
+        this.addEventListener(element, event, handler, options);
+    }
+
+    /**
      * Set interval with automatic cleanup
      */
     setInterval(callback, interval) {

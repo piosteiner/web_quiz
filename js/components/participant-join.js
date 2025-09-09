@@ -53,9 +53,9 @@ export class ParticipantJoin extends BaseComponent {
     }
 
     showJoinIdForm() {
-        const container = document.getElementById('app-container');
+        const container = document.getElementById('join-view');
         if (!container) {
-            console.error('App container not found');
+            console.error('Join view container not found');
             return;
         }
         container.innerHTML = `
@@ -110,9 +110,9 @@ export class ParticipantJoin extends BaseComponent {
 
             this.app.hideLoading();
 
-            const container = document.getElementById('app-container');
+            const container = document.getElementById('join-view');
             if (!container) {
-                console.error('App container not found');
+                console.error('Join view container not found');
                 return;
             }
             container.innerHTML = `
@@ -175,9 +175,9 @@ export class ParticipantJoin extends BaseComponent {
             this.app.hideLoading();
             console.error('Failed to load quiz:', error);
             
-            const container = document.getElementById('app-container');
+            const container = document.getElementById('join-view');
             if (!container) {
-                console.error('App container not found');
+                console.error('Join view container not found');
                 return;
             }
             container.innerHTML = `
@@ -291,9 +291,9 @@ export class ParticipantJoin extends BaseComponent {
     }
 
     showBasicParticipantInterface() {
-        const container = document.getElementById('app-container');
+        const container = document.getElementById('join-view');
         if (!container) {
-            console.error('App container not found');
+            console.error('Join view container not found');
             return;
         }
         container.innerHTML = `
