@@ -1,21 +1,22 @@
 {
   "name": "quiz-master-server",
   "version": "1.0.0",
-  "description": "Real-time quiz platform server with WebSocket support",
-  "main": "server/app.js",
+  "description": "Professional real-time quiz platform with WebSocket support and clean architecture",
+  "main": "src/app.js",
   "scripts": {
-    "start": "node server/app.js",
-    "dev": "nodemon server/app.js",
-    "test": "npm run test:server && npm run test:client",
-    "test:server": "mocha server/tests/**/*.test.js",
-    "test:client": "npm run serve:test",
-    "serve": "node server/app.js",
-    "serve:dev": "nodemon server/app.js --ignore client/",
-    "serve:test": "http-server tests/ -p 8081",
-    "install:all": "npm install && npm install -g nodemon",
-    "setup": "npm run install:all && mkdir -p logs uploads/temp",
-    "lint": "eslint server/ --ext .js",
-    "lint:fix": "eslint server/ --ext .js --fix"
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "npm run test:server",
+    "test:server": "mocha src/tests/**/*.test.js",
+    "serve": "node src/app.js",
+    "serve:dev": "nodemon src/app.js --ignore public/",
+    "setup": "npm install && mkdir -p data logs uploads/temp",
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix",
+    "pm2:start": "pm2 start ecosystem.config.js --env production",
+    "pm2:restart": "pm2 restart quiz-backend",
+    "pm2:stop": "pm2 stop quiz-backend",
+    "pm2:logs": "pm2 logs quiz-backend"
   },
   "keywords": [
     "quiz",
@@ -60,10 +61,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/quiz-master.git"
+    "url": "https://github.com/piosteiner/web_quiz.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/quiz-master/issues"
+    "url": "https://github.com/piosteiner/web_quiz/issues"
   },
-  "homepage": "https://github.com/your-username/quiz-master#readme"
+  "homepage": "https://quiz.piogino.ch"
 }

@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: 'quiz-backend',
-    script: 'src/app.js',
+    script: 'src/app.js',  // Corrected path
     instances: 1,
     exec_mode: 'fork',
     watch: false,

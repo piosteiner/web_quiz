@@ -17,7 +17,8 @@ Complete setup guide for developing the QuizMaster quiz platform.
 git clone https://github.com/piosteiner/web_quiz.git
 cd web_quiz
 
-# Install dependencies
+# Install backend dependencies
+cd backend
 npm install
 
 # Setup environment
@@ -25,7 +26,7 @@ cp .env.example .env
 ```
 
 ### 2. Configure Environment
-Edit `.env`:
+Edit `backend/.env`:
 ```bash
 # Basic configuration
 NODE_ENV=development
@@ -39,10 +40,7 @@ ALLOWED_ORIGINS=http://localhost:3002,http://127.0.0.1:3002
 
 ### 3. Start Development Server
 ```bash
-# Install dependencies (from project root)
-npm install
-
-# Start server
+# From backend directory
 npm run dev
 
 # Or start with PM2 for production-like environment
@@ -54,75 +52,64 @@ npm run production
 - **Admin Panel**: http://localhost:3002/html/admin.html
 - **API**: http://localhost:3002/api/health
 
-## 📁 Professional Project Structure
+## 📁 Project Structure Deep Dive
 
 ```
-quiz-platform/
-├── 📱 Frontend (Public Assets)
-│   └── public/                 # Static files served to browsers
-│       ├── index.html          # Main application page
-│       ├── js/                 # Frontend JavaScript
-│       │   ├── api.js          # API communication layer
-│       │   ├── config.js       # Environment configuration
-│       │   ├── components/     # UI components
-│       │   ├── core/           # Core application logic
-│       │   └── utils/          # Frontend utilities
-│       ├── css/                # Stylesheets and UI assets
-│       │   ├── spa.css         # Main application styles
-│       │   └── icons/          # Icon assets
-│       ├── favicon.ico         # Site favicon
-│       └── service-worker.js   # PWA service worker
-├── 🔧 Backend (Source Code)
-│   └── src/                    # Server application source
-│       ├── app.js              # Main Express application
-│       ├── controllers/        # Business logic controllers
-│       │   ├── quizController.js      # Quiz management
-│       │   ├── sessionController.js   # Live session handling
-│       │   └── websocketController.js # Real-time communication
-│       ├── routes/             # API route definitions
-│       │   ├── quizzes.js      # Quiz CRUD endpoints
-│       │   ├── sessions.js     # Session management
-│       │   ├── participants.js # Participant handling
-│       │   ├── auth.js         # Authentication routes
-│       │   └── health.js       # Health check endpoint
-│       ├── middleware/         # Express middleware
-│       │   ├── auth.js         # Authentication middleware
-│       │   ├── rate-limiter.js # API rate limiting
-│       │   └── error-handler.js # Global error handling
-│       ├── models/             # Data models (future use)
-│       └── utils/              # Server utilities
-│           └── logger.js       # Logging utility
-├── 📊 Runtime Data (gitignored)
-│   ├── data/                   # Application data storage
-│   ├── logs/                   # Application logs
-│   └── uploads/                # File upload storage
-├── ⚙️ Configuration
-│   ├── package.json            # Project dependencies
-│   ├── ecosystem.config.js     # PM2 process management
-│   ├── .env                    # Environment variables
-│   └── .gitignore              # Git ignore rules
+web_quiz/
+├── 🌐 Frontend Files (Root)
+│   ├── html/
+│   │   ├── admin.html          # Quiz creation interface
+│   │   ├── join.html           # Participant join page
+│   │   └── live-control.html   # Real-time quiz control
+│   ├── js/
+│   │   ├── main.js             # Core frontend logic
+│   │   ├── realtime.js         # Socket.IO integration
+│   │   ├── admin.js            # Admin panel functionality
+│   │   └── join.js             # Participant functionality
+│   ├── css/
+│   │   ├── styles.css          # Main stylesheet
+│   │   └── components/         # Component-specific styles
+│   └── index.html              # Landing page
+├── ⚙️ Backend/ (Server)
+│   ├── server/
+│   │   ├── app.js              # Main Express application
+│   │   ├── quiz-manager.js     # Quiz logic and storage
+│   │   ├── session-manager.js  # Live session handling
+│   │   └── websocket-handler.js # Real-time communication
+│   ├── routes/
+│   │   ├── quizzes.js          # Quiz CRUD operations
+│   │   ├── sessions.js         # Session management
+│   │   └── participants.js     # Participant handling
+│   ├── middleware/
+│   │   ├── auth.js             # Authentication (if enabled)
+│   │   ├── rate-limiter.js     # API rate limiting
+│   │   └── error-handler.js    # Global error handling
+│   ├── data/                   # Runtime data (gitignored)
+│   ├── logs/                   # Application logs (gitignored)
+│   ├── uploads/                # File uploads (gitignored)
+│   └── package.json            # Backend dependencies
 └── 📚 Documentation
-    ├── docs/SETUP.md           # This setup guide
-    ├── README.md               # Project overview
-    └── LICENSE                 # License information
+    ├── API.md                  # API documentation
+    ├── SETUP.md                # This file
+    └── CONTRIBUTING.md         # Contribution guidelines
 ```
 
 ## 🔧 Development Workflow
 
 ### Frontend Development
-1. **Edit Files**: Modify HTML, CSS, JS in the `public/` directory
+1. **Edit Files**: Modify HTML, CSS, JS in the root directory
 2. **Live Reload**: The server serves frontend files directly
 3. **Test Changes**: Refresh browser to see updates
 4. **Debug**: Use browser developer tools
 
 ### Backend Development
-1. **Edit Server Code**: Modify files in `src/`
+1. **Edit Server Code**: Modify files in `backend/server/`
 2. **Restart Server**: Use `npm run dev` for auto-restart with nodemon
 3. **Test API**: Use tools like Postman or curl
-4. **Check Logs**: Monitor console output or `logs/` directory
+4. **Check Logs**: Monitor console output or log files
 
 ### Database/Storage
-- **Development**: Uses file-based storage in `data/`
+- **Development**: Uses file-based storage in `backend/data/`
 - **Production**: Can be configured for external databases
 - **Data Protection**: All data directories are gitignored
 
@@ -175,6 +162,7 @@ quiz-platform/
 ### Run Tests
 ```bash
 # Backend tests
+cd backend
 npm test
 
 # Frontend tests (if available)
@@ -215,27 +203,33 @@ pm2 logs
 
 ### Current Production Architecture
 
-The application now uses a clean, single-server architecture:
+The application uses a simplified single-server architecture:
 
-- **Frontend & Backend**: Both served from `https://quiz.piogino.ch`
-- **Server**: Running on cloud server at `83.228.207.199:3002`
-- **Communication**: Same-origin requests (no CORS complexity)
-- **SSL**: Single Let's Encrypt certificate for entire application
+- **All-in-One**: Frontend and backend served from same domain
+- **Server**: Running on cloud server at `83.228.207.199:3002`  
+- **Domain**: `quiz.piogino.ch` points to server (or `quiz-backend.piogino.ch` temporarily)
+- **HTTPS**: SSL certificates via Let's Encrypt
 
 **Production URLs:**
-- Application: `https://quiz.piogino.ch` (Frontend + API)
-- API Health: `https://quiz.piogino.ch/api/health`
-- Admin Panel: `https://quiz.piogino.ch/html/admin.html`
+- Application: `https://quiz.piogino.ch` (or `https://quiz-backend.piogino.ch`)
+- API: `https://quiz.piogino.ch/api` (same origin - no CORS needed)
+- Health Check: `https://quiz.piogino.ch/api/health`
 
 **Infrastructure:**
-- Express.js serves both static files and API endpoints
+- Express.js serves both static files and API routes
 - PM2 process management on localhost:3002
-- Nginx proxy with SSL termination
-- Single domain, single certificate, simplified deployment
+- Nginx proxies domain → localhost:3002
+- Single SSL certificate covers everything
 
 **Authentication:**
 - Admin Login: `admin@quiz.com` / `admin123`
-- Token-based authentication with same-origin security
+- Token-based authentication with automatic cleanup
+
+**DNS Configuration:**
+To complete the setup, update your DNS to point:
+```
+quiz.piogino.ch A 83.228.207.199
+```
 
 ## 🔒 Security Considerations
 
