@@ -3,7 +3,7 @@
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'pigi-quiz-v2.1.5';
+const CACHE_NAME = 'pigi-quiz-cache';
 const urlsToCache = [
     '/',
     '/index.html',

@@ -4,7 +4,7 @@
  */
 
 import CONFIG from './config.js';
-import API from './api.js?v=2.1.5';
+import API from './api.js';
 import realTimeService from './realtime.js';
 import { ComponentManager } from './core/component-manager.js';
 import { StateManager } from './core/state-manager.js';
@@ -183,7 +183,7 @@ class PiGiQuizApp {
                 },
                 'admin': async () => {
                     // Use unified admin component
-                    const { QuizAdmin } = await import('./components/quiz-admin.js?v=2.1.0');
+                    const { QuizAdmin } = await import('./components/quiz-admin.js');
                     const adminComponent = await this.componentManager.registerComponent('admin', QuizAdmin, params);
                     this.components.admin = adminComponent; // Legacy compatibility
                     
@@ -196,7 +196,7 @@ class PiGiQuizApp {
                 },
                 'quiz-admin': async () => {
                     // Use unified admin component
-                    const { QuizAdmin } = await import('./components/quiz-admin.js?v=2.1.0');
+                    const { QuizAdmin } = await import('./components/quiz-admin.js');
                     const component = await this.componentManager.registerComponent('admin', QuizAdmin, params);
                     this.components.admin = component; // Legacy compatibility
                     return component;
