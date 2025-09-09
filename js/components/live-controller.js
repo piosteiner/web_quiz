@@ -3,11 +3,11 @@
  * Handles live quiz session control and monitoring
  */
 
-export class LiveController {
+import { BaseComponent } from '../utils/base-component.js';
+
+export class LiveController extends BaseComponent {
     constructor(app) {
-        this.app = app;
-        this.cloudAPI = app.getCloudAPI();
-        this.realtime = app.getRealtime();
+        super(app);
         
         this.sessionId = null;
         this.quiz = null;
@@ -31,7 +31,7 @@ export class LiveController {
         this.autoSaveTimeout = null;
     }
 
-    async init(params = {}) {
+    async onInit(params = {}) {
         console.log('📡 Initializing Live Controller');
         
         this.sessionId = params.sessionId || this.app.getState().session?.id;
@@ -292,7 +292,7 @@ export class LiveController {
         }
 
         try {
-            await this.cloudAPI.startSession(this.sessionId);
+            await this.api.startSession(this.sessionId);
             this.isSessionActive = true;
             this.currentQuestionIndex = 0;
             
@@ -323,7 +323,7 @@ export class LiveController {
         }
 
         try {
-            await this.cloudAPI.endSession(this.sessionId);
+            await this.api.endSession(this.sessionId);
             this.isSessionActive = false;
             this.stopQuestionTimer();
             
@@ -833,7 +833,7 @@ export class LiveController {
                     participants: Array.from(this.participants.values())
                 };
 
-                await this.cloudAPI.updateSessionState(this.sessionId, sessionState);
+                await this.api.updateSessionState(this.sessionId, sessionState);
                 console.log('✅ Session state auto-saved');
             } catch (error) {
                 console.warn('Session state auto-save failed:', error.message);

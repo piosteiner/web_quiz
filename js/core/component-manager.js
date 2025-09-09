@@ -3,6 +3,8 @@
  * Handles component lifecycle, event management, and prevents memory leaks
  */
 
+import { BaseComponent } from '../utils/base-component.js';
+
 export class ComponentManager {
     constructor(app) {
         this.app = app;
@@ -145,74 +147,5 @@ export class ComponentManager {
     async reinitializeComponent(name, ComponentClass, params = {}) {
         await this.cleanupComponent(name);
         return await this.registerComponent(name, ComponentClass, params);
-    }
-}
-
-/**
- * Base Component Class
- * All components should extend this for proper lifecycle management
- */
-export class BaseComponent {
-    constructor(app) {
-        this.app = app;
-        this.componentManager = app.componentManager;
-        this.componentName = this.constructor.name;
-        this._isInitialized = false;
-    }
-
-    /**
-     * Add event listener through component manager
-     */
-    addEventListener(element, event, handler, options) {
-        this.componentManager.addEventListener(this.componentName, element, event, handler, options);
-    }
-
-    /**
-     * Add global event listener through component manager
-     */
-    addGlobalEventListener(target, event, handler, options) {
-        this.componentManager.addGlobalEventListener(this.componentName, target, event, handler, options);
-    }
-
-    /**
-     * Safe element query
-     */
-    $(selector) {
-        return document.querySelector(selector);
-    }
-
-    /**
-     * Safe element query all
-     */
-    $$(selector) {
-        return document.querySelectorAll(selector);
-    }
-
-    /**
-     * Show notification through app
-     */
-    notify(message, type = 'info') {
-        this.app.showNotification(message, type);
-    }
-
-    /**
-     * Navigate through app
-     */
-    navigate(route, state = {}) {
-        this.app.navigateTo(route, state);
-    }
-
-    /**
-     * Override in child classes for custom initialization
-     */
-    async init(params = {}) {
-        console.log(`🔧 Initializing ${this.componentName}`);
-    }
-
-    /**
-     * Override in child classes for custom cleanup
-     */
-    async cleanup() {
-        console.log(`🧹 Cleaning up ${this.componentName}`);
     }
 }

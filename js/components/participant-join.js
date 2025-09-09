@@ -3,17 +3,18 @@
  * Handles participant authentication and quiz joining
  */
 
-export class ParticipantJoin {
+import { BaseComponent } from '../utils/base-component.js';
+
+export class ParticipantJoin extends BaseComponent {
     constructor(app) {
-        this.app = app;
-        this.cloudAPI = app.getCloudAPI();
+        super(app);
         
         this.currentQuiz = null;
         this.currentParticipant = null;
         this.quizId = null;
     }
 
-    async init(params = {}) {
+    async onInit(params = {}) {
         console.log('👥 Initializing Participant Join');
         
         // Check if quiz ID is provided in URL
@@ -97,7 +98,7 @@ export class ParticipantJoin {
             this.app.showLoading('Lade Quiz...');
             
             // Load quiz information
-            this.currentQuiz = await this.cloudAPI.getQuiz(this.quizId);
+            this.currentQuiz = await this.api.getQuiz(this.quizId);
             
             if (!this.currentQuiz) {
                 throw new Error('Quiz nicht gefunden');
