@@ -44,13 +44,38 @@ class PiGiQuizApp {
         this.setupThemeSystem();
         this.setupNotifications();
         
+        // Preload critical components to avoid timing issues
+        await this.preloadCriticalComponents();
+        
         // Check authentication status
         await this.checkAuth();
         
         // Handle initial route
         this.handleRoute();
         
+        // Set loading complete flag
+        this.isLoaded = true;
         console.log('✅ PiGi Quiz App initialized');
+    }
+
+    async preloadCriticalComponents() {
+        try {
+            console.log('📦 Preloading critical components...');
+            
+            // Preload admin and editor components since they're commonly used
+            const [QuizAdminModule, QuizEditorModule] = await Promise.all([
+                import('./components/quiz-admin.js'),
+                import('./components/quiz-editor.js')
+            ]);
+            
+            // Initialize but don't call init() yet
+            this.components.admin = new QuizAdminModule.QuizAdmin(this);
+            this.components.editor = new QuizEditorModule.QuizEditor(this);
+            
+            console.log('✅ Critical components preloaded');
+        } catch (error) {
+            console.warn('⚠️ Component preloading failed, will load on demand:', error);
+        }
     }
 
     /**
@@ -207,6 +232,7 @@ class PiGiQuizApp {
                     break;
                     
                 case 'admin':
+                    // Use preloaded components if available
                     if (!this.components.admin) {
                         const QuizAdminModule = await import('./components/quiz-admin.js');
                         this.components.admin = new QuizAdminModule.QuizAdmin(this);
@@ -215,11 +241,14 @@ class PiGiQuizApp {
                         const QuizEditorModule = await import('./components/quiz-editor.js');
                         this.components.editor = new QuizEditorModule.QuizEditor(this);
                     }
+                    
+                    // Initialize components
                     await this.components.admin.init(params);
                     await this.components.editor.init(params);
                     break;
                     
                 case 'quiz-admin':
+                    // Use preloaded component if available
                     if (!this.components.admin) {
                         const QuizAdminModule = await import('./components/quiz-admin.js');
                         this.components.admin = new QuizAdminModule.QuizAdmin(this);
@@ -485,6 +514,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (prop === 'components') {
                 return new Proxy(target.components, {
                     get(componentTarget, componentProp) {
+                        // Check if app is fully loaded
+                        if (!target.isLoaded) {
+                            console.warn(`🔄 App not fully loaded, component ${componentProp} might not be ready`);
+                            // Return a proxy that delays method calls until loaded
+                            return new Proxy({}, {
+                                get(methodTarget, methodProp) {
+                                    return (...args) => {
+                                        if (target.isLoaded) {
+                                            window.safeCallApp(componentProp, methodProp, ...args);
+                                        } else {
+                                            console.warn(`Delayed call to ${componentProp}.${methodProp} - app not ready`);
+                                        }
+                                    };
+                                }
+                            });
+                        }
+                        
                         if (!componentTarget[componentProp]) {
                             console.warn(`Component ${componentProp} not yet loaded`);
                             // Return a proxy that delays method calls

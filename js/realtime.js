@@ -40,7 +40,7 @@ class RealTimeService {
         });
     }
 
-    // Load Socket.IO script dynamically
+    // Load Socket.IO script dynamically with better error handling
     loadSocketIOScript() {
         return new Promise((resolve, reject) => {
             if (typeof io !== 'undefined') {
@@ -52,8 +52,27 @@ class RealTimeService {
             // Load Socket.IO from the backend server
             const backendUrl = CONFIG.WEBSOCKET_URL.replace('wss://', 'https://').replace('ws://', 'http://');
             script.src = `${backendUrl}/socket.io/socket.io.js`;
-            script.onload = resolve;
-            script.onerror = reject;
+            
+            script.onload = () => {
+                console.log('✅ Socket.IO script loaded successfully');
+                resolve();
+            };
+            
+            script.onerror = (error) => {
+                console.error('❌ Failed to load Socket.IO script:', error);
+                // Don't completely fail - app should work without realtime
+                console.warn('⚠️ Continuing without realtime functionality');
+                resolve(); // Resolve anyway to prevent blocking
+            };
+            
+            // Add timeout for script loading
+            setTimeout(() => {
+                if (typeof io === 'undefined') {
+                    console.warn('⏰ Socket.IO script loading timeout');
+                    resolve(); // Resolve to prevent blocking
+                }
+            }, 10000); // 10 second timeout
+            
             document.head.appendChild(script);
         });
     }

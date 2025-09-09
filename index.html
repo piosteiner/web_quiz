@@ -15,8 +15,16 @@
     <!-- CSS -->
     <link rel="stylesheet" href="css/spa.css?v=1.0.2">
     
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome for Icons (with fallback) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
+          onerror="this.onerror=null; this.href='css/fallback-icons.css';">
+    
+    <!-- Preload critical JavaScript modules -->
+    <link rel="modulepreload" href="js/config.js">
+    <link rel="modulepreload" href="js/cloud-api.js">
+    <link rel="modulepreload" href="js/app.js">
+    <link rel="modulepreload" href="js/components/quiz-admin.js">
+    <link rel="modulepreload" href="js/components/quiz-editor.js">
     
     <!-- iOS PWA Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -543,8 +551,16 @@
         <i class="fas fa-wifi"></i>
     </div>
 
-    <!-- JavaScript Modules -->
+    <!-- JavaScript Modules - Load in proper order -->
+    <!-- PWA functionality should initialize after app -->
     <script type="module" src="js/app.js?v=1.0.2"></script>
-    <script type="module" src="js/pwa.js?v=1.0.2"></script>
+    <script type="module">
+        // Ensure app is fully loaded before PWA
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                import('./js/pwa.js?v=1.0.2');
+            }, 100);
+        });
+    </script>
 </body>
 </html>
