@@ -77,6 +77,17 @@ class APIService {
 
                 const data = await this.parseResponse(response);
                 console.log(`✅ API Success: ${endpoint}`);
+                
+                // Handle backend response format {success, data, ...} vs direct data
+                if (data && typeof data === 'object' && data.hasOwnProperty('success')) {
+                    if (data.success) {
+                        // Return the data portion or the entire response minus success flag
+                        return data.data || (({success, ...rest}) => rest)(data);
+                    } else {
+                        throw new APIError(data.error || 'Request failed', endpoint, data);
+                    }
+                }
+                
                 return data;
                 
             } catch (error) {
@@ -113,7 +124,10 @@ class APIService {
             case 404:
                 // Return empty fallback data for 404s to prevent crashes
                 console.warn(`⚠️ Resource not found: ${endpoint}, using fallback data`);
-                return this.getFallbackData(endpoint);
+                if (attempt >= this.retryAttempts) {
+                    return this.getFallbackData(endpoint);
+                }
+                return; // Continue retry for other attempts
             case 500:
             case 502:
             case 503:
@@ -139,7 +153,18 @@ class APIService {
         const contentType = response.headers.get('content-type');
         
         if (contentType?.includes('application/json')) {
-            return await response.json();
+            const data = await response.json();
+            
+            // Handle backend response format {success, data} vs direct data
+            if (data && typeof data === 'object' && 'success' in data) {
+                if (data.success) {
+                    return data.data || data; // Return data field or entire object
+                } else {
+                    throw new APIError(data.error || 'Request failed', '', data);
+                }
+            }
+            
+            return data; // Return data as-is if not in {success, data} format
         }
         
         if (contentType?.includes('text/')) {
@@ -396,6 +421,53 @@ class APIService {
             return response;
         } catch (error) {
             console.error('❌ Failed to get session:', error);
+            throw error;
+        }
+    }
+
+    async startSession(sessionId) {
+        try {
+            const response = await this.post(`/sessions/${sessionId}/start`);
+            console.log(`✅ Started session ${sessionId}`);
+            return response;
+        } catch (error) {
+            console.error('❌ Failed to start session:', error);
+            throw error;
+        }
+    }
+
+    async endSession(sessionId) {
+        try {
+            const response = await this.post(`/sessions/${sessionId}/end`);
+            console.log(`✅ Ended session ${sessionId}`);
+            return response;
+        } catch (error) {
+            console.error('❌ Failed to end session:', error);
+            throw error;
+        }
+    }
+
+    async updateSessionState(sessionId, state) {
+        try {
+            // Use PUT to update session state - backend might have this endpoint
+            const response = await this.put(`/sessions/${sessionId}`, state);
+            console.log(`✅ Updated session state ${sessionId}`);
+            return response;
+        } catch (error) {
+            console.warn('⚠️ Session state update failed, continuing...', error);
+            // Don't throw for state updates as they're not critical
+            return null;
+        }
+    }
+
+    async submitAnswer(answerData) {
+        try {
+            // Submit answer to session - this might be handled by participants routes
+            const response = await this.post(`/participants/answer`, answerData);
+            console.log('✅ Answer submitted successfully');
+            return response;
+        } catch (error) {
+            console.error('❌ Failed to submit answer:', error);
             throw error;
         }
     }
