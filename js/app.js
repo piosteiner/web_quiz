@@ -26,6 +26,7 @@ class PiGiQuizApp {
         this.components = {
             join: null,
             admin: null,
+            editor: null,
             live: null
         };
         
@@ -173,7 +174,12 @@ class PiGiQuizApp {
                         const { QuizAdmin } = await import('./components/quiz-admin.js');
                         this.components.admin = new QuizAdmin(this);
                     }
+                    if (!this.components.editor) {
+                        const { QuizEditor } = await import('./components/quiz-editor.js');
+                        this.components.editor = new QuizEditor(this);
+                    }
                     await this.components.admin.init(params);
+                    await this.components.editor.init(params);
                     break;
                     
                 case 'live':
