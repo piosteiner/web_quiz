@@ -3,7 +3,7 @@
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'pigi-quiz-v1.0.1';
+const CACHE_NAME = 'pigi-quiz-v1.0.2';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -36,20 +36,49 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
+    // Skip non-GET requests and chrome-extension requests
+    if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension://')) {
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request)
             .then((response) => {
-                // Return cached version or fetch from network
+                // Return cached version if available
                 if (response) {
                     return response;
                 }
-                return fetch(event.request);
-            })
-            .catch(() => {
-                // If both cache and network fail, return offline page
-                if (event.request.destination === 'document') {
-                    return caches.match('/index.html');
-                }
+                
+                // Fetch from network
+                return fetch(event.request)
+                    .then((networkResponse) => {
+                        // Check if we received a valid response
+                        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+                            return networkResponse;
+                        }
+
+                        // Clone the response for caching
+                        const responseToCache = networkResponse.clone();
+
+                        // Cache the response for future use
+                        caches.open(CACHE_NAME)
+                            .then((cache) => {
+                                cache.put(event.request, responseToCache);
+                            });
+
+                        return networkResponse;
+                    })
+                    .catch(() => {
+                        // If both cache and network fail, return offline page for documents
+                        if (event.request.destination === 'document') {
+                            return caches.match('/index.html');
+                        }
+                        // For other resources, return a basic error response
+                        return new Response('Offline', {
+                            status: 503,
+                            statusText: 'Service Unavailable'
+                        });
+                    });
             })
     );
 });

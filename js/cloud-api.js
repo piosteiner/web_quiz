@@ -7,6 +7,7 @@ class CloudAPIService {
         this.authToken = localStorage.getItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN);
         this.syncQueue = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.SYNC_QUEUE) || '[]');
         this.isOnline = navigator.onLine;
+        this.backendAvailable = true; // Track backend availability
         
         this.setupEventListeners();
         this.startSyncProcess();
@@ -52,10 +53,12 @@ class CloudAPIService {
             }
             
             const quizzes = await this.makeRequest(CONFIG.ENDPOINTS.QUIZZES);
+            this.backendAvailable = true; // Backend is working
             this.cacheData('quizzes', quizzes);
             return quizzes;
         } catch (error) {
             console.warn('Failed to fetch quizzes from server, using cache:', error);
+            this.backendAvailable = false; // Mark backend as unavailable
             return this.getCachedData('quizzes') || [];
         }
     }
@@ -80,7 +83,7 @@ class CloudAPIService {
 
     async createQuiz(quizData) {
         try {
-            if (!this.isOnline) {
+            if (!this.isOnline || !this.backendAvailable) {
                 return this.queueOperation('CREATE_QUIZ', quizData);
             }
             
@@ -89,6 +92,7 @@ class CloudAPIService {
                 body: JSON.stringify(quizData)
             });
             
+            this.backendAvailable = true; // Backend is working
             this.updateLocalCache('quizzes', quiz, 'add');
             return quiz;
         } catch (error) {
@@ -272,9 +276,17 @@ class CloudAPIService {
             
             return await response.json();
         } catch (error) {
+            console.warn('Request failed:', error);
+            
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
                 throw new Error('Netzwerkfehler - Server nicht erreichbar');
             }
+            
+            // Handle CORS and other network errors
+            if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
+                throw new Error('Backend-Verbindung fehlgeschlagen - CORS-Fehler');
+            }
+            
             throw error;
         }
     }
