@@ -1,5 +1,5 @@
 /**
- const CACHE_NAME = 'pigi-quiz-v1.0.5'; Service Worker for PiGi Quiz Platform
+ const CACHE_NAME = 'pigi-quiz-v1.0.6'; Service Worker for PiGi Quiz Platform
  * Handles caching and offline functionality
  */
 

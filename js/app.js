@@ -4,7 +4,7 @@
  */
 
 import CONFIG from './config.js';
-import CloudAPIService from './cloud-api.js?v=1.0.5';
+import CloudAPIService from './cloud-api.js?v=1.0.6';
 import realTimeService from './realtime.js';
 
 class PiGiQuizApp {

@@ -25,7 +25,13 @@ export class QuizAdmin {
         if (this.app.getState().user) {
             // Check if we're in quiz-admin view (editing specific quiz)
             if (this.app.currentView === 'quiz-admin') {
-                this.showQuizAdminForm();
+                // Only show quiz admin form if we have a current quiz
+                if (this.currentQuiz) {
+                    this.showQuizAdminForm();
+                } else {
+                    // No quiz selected, show the dashboard instead
+                    this.showAdminDashboard();
+                }
             } else {
                 this.showAdminDashboard();
             }
@@ -386,6 +392,7 @@ export class QuizAdmin {
         const titleInput = document.getElementById('admin-quiz-title');
         if (titleInput) {
             titleInput.addEventListener('input', () => {
+                if (!this.currentQuiz) return;
                 this.currentQuiz.title = titleInput.value;
                 this.markAsChanged();
                 this.debouncedAutoSave();
@@ -396,6 +403,7 @@ export class QuizAdmin {
         const descInput = document.getElementById('admin-quiz-description');
         if (descInput) {
             descInput.addEventListener('input', () => {
+                if (!this.currentQuiz) return;
                 this.currentQuiz.description = descInput.value;
                 this.markAsChanged();
                 this.debouncedAutoSave();
@@ -496,12 +504,23 @@ export class QuizAdmin {
         const descInput = document.getElementById('admin-quiz-description');
         const quizIdDisplay = document.getElementById('admin-quiz-id-display');
 
+        // Safety check - if no current quiz, don't populate
+        if (!this.currentQuiz) {
+            console.warn('No current quiz to populate form with');
+            return;
+        }
+
         if (titleInput) titleInput.value = this.currentQuiz.title || '';
         if (descInput) descInput.value = this.currentQuiz.description || '';
         if (quizIdDisplay) quizIdDisplay.textContent = this.currentQuiz.id;
     }
 
     openQuizEditor() {
+        if (!this.currentQuiz) {
+            this.app.showNotification('Kein Quiz ausgewählt', 'error');
+            return;
+        }
+        
         // Save current admin changes first
         this.saveQuizAdminData();
         
