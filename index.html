@@ -269,6 +269,131 @@
                             </div>
                         </div>
 
+                        <!-- Quiz Admin -->
+                        <div id="quiz-admin-view" class="quiz-admin" style="display: none;">
+                            <div class="admin-header">
+                                <button id="back-to-list-admin" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Zurück zur Liste
+                                </button>
+                                <div class="admin-actions">
+                                    <button id="save-quiz-admin" class="btn btn-success">
+                                        <i class="fas fa-save"></i> Speichern
+                                    </button>
+                                    <button id="open-quiz-editor" class="btn btn-primary">
+                                        <i class="fas fa-edit"></i> Quiz Editor öffnen
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="admin-content">
+                                <!-- Quiz Basic Info -->
+                                <div class="card quiz-basic-info">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="fas fa-info-circle"></i> Quiz Information
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="admin-quiz-title">Quiz Titel *</label>
+                                            <input type="text" id="admin-quiz-title" class="form-input" placeholder="Geben Sie einen aussagekräftigen Titel ein" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="admin-quiz-description">Beschreibung</label>
+                                            <textarea id="admin-quiz-description" class="form-textarea" placeholder="Beschreiben Sie Ihr Quiz (optional)"></textarea>
+                                        </div>
+                                        <div class="quiz-info-grid">
+                                            <div class="info-item">
+                                                <label>Quiz-ID</label>
+                                                <div class="info-value">
+                                                    <span id="admin-quiz-id-display">-</span>
+                                                    <button id="copy-quiz-id" class="btn btn-sm btn-outline" title="Quiz-ID kopieren">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="info-item">
+                                                <label>Beitritts-Link</label>
+                                                <div class="info-value">
+                                                    <button id="copy-join-link" class="btn btn-sm btn-primary" title="Beitritts-Link kopieren">
+                                                        <i class="fas fa-link"></i> Link kopieren
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Participants Management -->
+                                <div class="card participants-management">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="fas fa-users"></i> Teilnehmer verwalten
+                                            <span id="admin-participant-count" class="participant-counter">(0)</span>
+                                        </h4>
+                                        <div class="participant-actions">
+                                            <button id="add-participant-btn" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-user-plus"></i> Hinzufügen
+                                            </button>
+                                            <button id="bulk-add-btn" class="btn btn-secondary btn-sm">
+                                                <i class="fas fa-users"></i> Massenimport
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Add Participant Form -->
+                                        <div id="add-participant-form" class="add-participant-form" style="display: none;">
+                                            <div class="form-group">
+                                                <label for="participant-name">Name</label>
+                                                <input type="text" id="participant-name" class="form-input" placeholder="Teilnehmername eingeben">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="participant-email">E-Mail (optional)</label>
+                                                <input type="email" id="participant-email" class="form-input" placeholder="E-Mail-Adresse eingeben">
+                                            </div>
+                                            <div class="form-actions">
+                                                <button id="confirm-add-participant" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-check"></i> Hinzufügen
+                                                </button>
+                                                <button id="cancel-add-participant" class="btn btn-secondary btn-sm">
+                                                    <i class="fas fa-times"></i> Abbrechen
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Bulk Add Form -->
+                                        <div id="bulk-add-form" class="bulk-add-form" style="display: none;">
+                                            <div class="form-group">
+                                                <label for="bulk-participants">Teilnehmer (ein Name pro Zeile)</label>
+                                                <textarea id="bulk-participants" class="form-textarea" rows="5" placeholder="Max Mustermann&#10;Anna Schmidt&#10;John Doe"></textarea>
+                                            </div>
+                                            <div class="form-actions">
+                                                <button id="confirm-bulk-add" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-check"></i> Alle hinzufügen
+                                                </button>
+                                                <button id="cancel-bulk-add" class="btn btn-secondary btn-sm">
+                                                    <i class="fas fa-times"></i> Abbrechen
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Participants List -->
+                                        <div id="admin-participants-list" class="participants-list">
+                                            <div class="empty-participants">
+                                                <div class="empty-state">
+                                                    <div class="empty-state-icon">
+                                                        <i class="fas fa-users"></i>
+                                                    </div>
+                                                    <h3>Noch keine Teilnehmer</h3>
+                                                    <p>Fügen Sie Teilnehmer hinzu, um zu beginnen!</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Quiz Editor -->
                         <div id="quiz-editor-view" class="quiz-editor" style="display: none;">
                             <div class="editor-header">
@@ -297,34 +422,24 @@
                                         </h4>
                                     </div>
                                     <div class="card-body">
-                                        <div class="form-group">
-                                            <label for="quiz-title">Quiz Titel *</label>
-                                            <input type="text" id="quiz-title" class="form-input" placeholder="Geben Sie einen aussagekräftigen Titel ein" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="quiz-description">Beschreibung</label>
-                                            <textarea id="quiz-description" class="form-textarea" placeholder="Beschreiben Sie Ihr Quiz (optional)"></textarea>
+                                        <div class="quiz-info-display">
+                                            <div class="info-item">
+                                                <label>Quiz Titel</label>
+                                                <div class="info-value">
+                                                    <span id="editor-quiz-title-display">-</span>
+                                                </div>
+                                            </div>
+                                            <div class="info-item">
+                                                <label>Beschreibung</label>
+                                                <div class="info-value">
+                                                    <span id="editor-quiz-description-display">-</span>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="quiz-settings-grid">
                                             <div class="form-group">
                                                 <label for="time-per-question">Zeit pro Frage (Sekunden)</label>
                                                 <input type="number" id="time-per-question" class="form-input" value="30" min="10" max="300">
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="max-participants">Max. Teilnehmer</label>
-                                                <input type="number" id="max-participants" class="form-input" value="50" min="1" max="1000">
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="quiz-category">Kategorie</label>
-                                                <select id="quiz-category" class="form-select">
-                                                    <option value="general">Allgemein</option>
-                                                    <option value="science">Wissenschaft</option>
-                                                    <option value="history">Geschichte</option>
-                                                    <option value="sports">Sport</option>
-                                                    <option value="entertainment">Unterhaltung</option>
-                                                    <option value="technology">Technologie</option>
-                                                    <option value="education">Bildung</option>
-                                                </select>
                                             </div>
                                         </div>
                                     </div>
@@ -372,9 +487,6 @@
                                                 <label>Quiz-ID</label>
                                                 <div class="info-value">
                                                     <span id="quiz-id-display">-</span>
-                                                    <button class="btn btn-sm btn-outline" onclick="window.app.components.editor.copyQuizId()" title="Quiz-ID kopieren">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
                                                 </div>
                                             </div>
                                             <div class="info-item">

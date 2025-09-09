@@ -215,6 +215,14 @@ class PiGiQuizApp {
                     await this.components.editor.init(params);
                     break;
                     
+                case 'quiz-admin':
+                    if (!this.components.admin) {
+                        const QuizAdminModule = await import('./components/quiz-admin.js');
+                        this.components.admin = new QuizAdminModule.QuizAdmin(this);
+                    }
+                    await this.components.admin.init(params);
+                    break;
+                    
                 case 'live':
                     if (!this.components.live) {
                         const { LiveController } = await import('./components/live-controller.js');

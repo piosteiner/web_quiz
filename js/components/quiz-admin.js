@@ -1,6 +1,6 @@
 /**
  * Quiz Admin Component
- * Handles quiz management and authentication (Editor functionality moved to quiz-editor.js)
+ * Handles quiz metadata, participant management, and basic quiz operations
  */
 
 export class QuizAdmin {
@@ -10,10 +10,7 @@ export class QuizAdmin {
         
         this.quizzes = [];
         this.currentQuiz = null;
-        this.currentQuestions = [];
         this.isAuthenticated = false;
-        this.isEditing = false;
-        this.draggedQuestion = null;
         this.autoSaveTimeout = null;
     }
 
@@ -24,7 +21,12 @@ export class QuizAdmin {
         
         // Check if user is already authenticated
         if (this.app.getState().user) {
-            this.showAdminDashboard();
+            // Check if we're in quiz-admin view (editing specific quiz)
+            if (this.app.currentView === 'quiz-admin') {
+                this.showQuizAdminForm();
+            } else {
+                this.showAdminDashboard();
+            }
         } else {
             this.showLoginSection();
         }
@@ -64,60 +66,42 @@ export class QuizAdmin {
             this.createNewQuiz();
         });
 
+        // Quiz Admin navigation buttons
+        const backToListAdmin = document.getElementById('back-to-list-admin');
+        backToListAdmin?.addEventListener('click', () => {
+            this.app.navigateTo('admin');
+        });
+
+        const openQuizEditor = document.getElementById('open-quiz-editor');
+        openQuizEditor?.addEventListener('click', () => {
+            this.app.navigateTo('admin'); // Switch to editor view within admin
+            setTimeout(() => {
+                document.getElementById('quiz-editor-view').style.display = 'block';
+                document.getElementById('quiz-admin-view').style.display = 'none';
+            }, 100);
+        });
+
+        const saveQuizAdmin = document.getElementById('save-quiz-admin');
+        saveQuizAdmin?.addEventListener('click', () => {
+            this.saveQuizAdmin();
+        });
+
+        const copyQuizId = document.getElementById('copy-quiz-id');
+        copyQuizId?.addEventListener('click', () => {
+            this.copyQuizId();
+        });
+
+        const copyJoinLink = document.getElementById('copy-join-link');
+        copyJoinLink?.addEventListener('click', () => {
+            this.copyJoinLink();
+        });
+
         // Password validation
         const registerPassword = document.getElementById('register-password');
         const confirmPassword = document.getElementById('confirm-password');
         
         confirmPassword?.addEventListener('input', () => {
             this.validatePasswordMatch();
-        });
-
-        // Setup quiz editor listeners
-        this.setupQuizEditorListeners();
-    }
-
-    setupQuizEditorListeners() {
-        // Back to list button
-        const backToListBtn = document.getElementById('back-to-list');
-        backToListBtn?.addEventListener('click', () => {
-            this.showQuizList();
-        });
-
-        // Save quiz button
-        const saveQuizBtn = document.getElementById('save-quiz');
-        saveQuizBtn?.addEventListener('click', () => {
-            this.saveCurrentQuiz();
-        });
-
-        // Preview quiz button
-        const previewQuizBtn = document.getElementById('preview-quiz');
-        previewQuizBtn?.addEventListener('click', () => {
-            this.previewQuiz();
-        });
-
-        // Publish quiz button
-        const publishQuizBtn = document.getElementById('publish-quiz');
-        publishQuizBtn?.addEventListener('click', () => {
-            this.publishQuiz();
-        });
-
-        // Add question button
-        const addQuestionBtn = document.getElementById('add-question');
-        addQuestionBtn?.addEventListener('click', () => {
-            this.addNewQuestion();
-        });
-
-        // Quiz title input
-        const quizTitleInput = document.getElementById('quiz-title');
-        quizTitleInput?.addEventListener('input', () => {
-            this.updateQuizTitle();
-        });
-
-        // Auto-save functionality
-        document.addEventListener('input', (e) => {
-            if (this.isEditing && e.target.closest('.quiz-editor')) {
-                this.scheduleAutoSave();
-            }
         });
     }
 
@@ -339,9 +323,189 @@ export class QuizAdmin {
 
     // Quiz Management Methods
     createNewQuiz() {
-        // Open quiz editor with new quiz
+        // Create new quiz with admin form
+        this.currentQuiz = this.createNewQuizTemplate();
+        this.app.navigateTo('quiz-admin');
+    }
+
+    createNewQuizTemplate() {
+        const quizId = this.generateUniqueQuizId();
+        return {
+            id: quizId,
+            title: 'Neues Quiz',
+            description: '',
+            participants: [],
+            questions: [],
+            settings: {
+                timePerQuestion: 30
+            },
+            published: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+    }
+
+    generateUniqueQuizId() {
+        // Generate a unique 8-character quiz ID
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < 8; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+
+    showQuizAdminForm() {
+        document.getElementById('quiz-list-view').style.display = 'none';
+        document.getElementById('quiz-admin-view').style.display = 'block';
+        
+        this.populateAdminForm();
+        this.renderParticipantList();
+        this.setupAdminFormListeners();
+    }
+
+    setupAdminFormListeners() {
+        // Add participant form
+        this.setupParticipantFormListeners();
+
+        // Copy quiz ID
+        const copyIdBtn = document.getElementById('copy-quiz-id');
+        if (copyIdBtn) {
+            copyIdBtn.onclick = () => this.copyQuizId();
+        }
+
+        // Copy join link
+        const copyLinkBtn = document.getElementById('copy-join-link');
+        if (copyLinkBtn) {
+            copyLinkBtn.onclick = () => this.copyJoinLink();
+        }
+
+        // Quiz title input
+        const titleInput = document.getElementById('admin-quiz-title');
+        if (titleInput) {
+            titleInput.addEventListener('input', () => {
+                this.currentQuiz.title = titleInput.value;
+                this.markAsChanged();
+                this.debouncedAutoSave();
+            });
+        }
+
+        // Quiz description input
+        const descInput = document.getElementById('admin-quiz-description');
+        if (descInput) {
+            descInput.addEventListener('input', () => {
+                this.currentQuiz.description = descInput.value;
+                this.markAsChanged();
+                this.debouncedAutoSave();
+            });
+        }
+    }
+
+    // Debounced auto-save for title/description changes
+    debouncedAutoSave() {
+        if (this.autoSaveTimeout) {
+            clearTimeout(this.autoSaveTimeout);
+        }
+        
+        this.autoSaveTimeout = setTimeout(async () => {
+            if (this.currentQuiz && this.currentQuiz.title.trim()) {
+                try {
+                    await this.saveQuizToServer();
+                    console.log('✅ Quiz auto-saved');
+                } catch (error) {
+                    console.warn('Auto-save failed:', error.message);
+                    // Don't show error notification for auto-save failures
+                }
+            }
+        }, 2000); // Auto-save after 2 seconds of inactivity
+    }
+
+    setupParticipantFormListeners() {
+        // Add participant button
+        const addParticipantBtn = document.getElementById('add-participant-btn');
+        if (addParticipantBtn) {
+            addParticipantBtn.onclick = () => this.showAddParticipantForm();
+        }
+
+        // Bulk add button
+        const bulkAddBtn = document.getElementById('bulk-add-btn');
+        if (bulkAddBtn) {
+            bulkAddBtn.onclick = () => this.showBulkAddForm();
+        }
+
+        // Add participant form
+        const confirmAddBtn = document.getElementById('confirm-add-participant');
+        if (confirmAddBtn) {
+            confirmAddBtn.onclick = () => this.addParticipantFromInput();
+        }
+
+        const cancelAddBtn = document.getElementById('cancel-add-participant');
+        if (cancelAddBtn) {
+            cancelAddBtn.onclick = () => this.hideAddParticipantForm();
+        }
+
+        // Bulk add form
+        const confirmBulkBtn = document.getElementById('confirm-bulk-add');
+        if (confirmBulkBtn) {
+            confirmBulkBtn.onclick = () => this.addBulkParticipants();
+        }
+
+        const cancelBulkBtn = document.getElementById('cancel-bulk-add');
+        if (cancelBulkBtn) {
+            cancelBulkBtn.onclick = () => this.hideBulkAddForm();
+        }
+
+        // Participant name input (Enter key)
+        const participantNameInput = document.getElementById('participant-name');
+        if (participantNameInput) {
+            participantNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.addParticipantFromInput();
+                }
+            });
+        }
+    }
+
+    showAddParticipantForm() {
+        document.getElementById('add-participant-form').style.display = 'block';
+        document.getElementById('bulk-add-form').style.display = 'none';
+        document.getElementById('participant-name').focus();
+    }
+
+    hideAddParticipantForm() {
+        document.getElementById('add-participant-form').style.display = 'none';
+        document.getElementById('participant-name').value = '';
+        document.getElementById('participant-email').value = '';
+    }
+
+    showBulkAddForm() {
+        document.getElementById('bulk-add-form').style.display = 'block';
+        document.getElementById('add-participant-form').style.display = 'none';
+        document.getElementById('bulk-participants').focus();
+    }
+
+    hideBulkAddForm() {
+        document.getElementById('bulk-add-form').style.display = 'none';
+        document.getElementById('bulk-participants').value = '';
+    }
+
+    populateAdminForm() {
+        const titleInput = document.getElementById('admin-quiz-title');
+        const descInput = document.getElementById('admin-quiz-description');
+        const quizIdDisplay = document.getElementById('admin-quiz-id-display');
+
+        if (titleInput) titleInput.value = this.currentQuiz.title || '';
+        if (descInput) descInput.value = this.currentQuiz.description || '';
+        if (quizIdDisplay) quizIdDisplay.textContent = this.currentQuiz.id;
+    }
+
+    openQuizEditor() {
+        // Save current admin changes first
+        this.saveQuizAdminData();
+        
+        // Open quiz editor with current quiz
         if (this.app.components.editor) {
-            this.app.components.editor.openEditor(null);
+            this.app.components.editor.openEditor(this.currentQuiz);
         } else {
             console.error('Quiz editor component not loaded');
         }
@@ -354,11 +518,448 @@ export class QuizAdmin {
             return;
         }
         
-        // Open quiz editor with existing quiz
-        if (this.app.components.editor) {
-            this.app.components.editor.openEditor(quiz);
+        this.currentQuiz = { ...quiz };
+        this.showQuizAdminForm();
+    }
+
+    showQuizList() {
+        document.getElementById('quiz-admin-view').style.display = 'none';
+        document.getElementById('quiz-list-view').style.display = 'block';
+        this.currentQuiz = null;
+    }
+
+    markAsChanged() {
+        // Mark quiz as having unsaved changes
+        const saveBtn = document.getElementById('save-quiz-admin');
+        if (saveBtn) {
+            saveBtn.classList.add('btn-warning');
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Speichern*';
+        }
+    }
+
+    // Participant Management Methods
+    renderParticipantList() {
+        const participantsList = document.getElementById('participants-list-admin');
+        if (!participantsList) return;
+
+        const participants = this.currentQuiz.participants || [];
+        
+        participantsList.innerHTML = `
+            <div class="participants-count">
+                <h4><i class="fas fa-users"></i> Teilnehmer (${participants.length})</h4>
+            </div>
+            
+            <div class="participant-input">
+                <div class="input-group">
+                    <input type="text" 
+                           id="new-participant-name" 
+                           placeholder="Teilnehmername eingeben..."
+                           class="form-control">
+                    <button id="add-participant-btn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Hinzufügen
+                    </button>
+                </div>
+                
+                <div class="bulk-input-section">
+                    <textarea id="bulk-participants-admin" 
+                              placeholder="Mehrere Namen (einen pro Zeile)..."
+                              class="form-control"
+                              rows="3"></textarea>
+                    <button id="bulk-add-participants" class="btn btn-secondary">
+                        <i class="fas fa-users"></i> Alle hinzufügen
+                    </button>
+                </div>
+            </div>
+
+            <div class="participants-list">
+                ${participants.length > 0 ? participants.map((participant, index) => `
+                    <div class="participant-item" data-participant-id="${participant.id}">
+                        <div class="participant-info">
+                            <span class="participant-name">${participant.name}</span>
+                            <span class="participant-status ${participant.status || 'pending'}">${this.getParticipantStatusText(participant.status || 'pending')}</span>
+                        </div>
+                        <div class="participant-actions">
+                            <button class="btn-icon" onclick="window.app.components.admin.editParticipant('${participant.id}')" title="Bearbeiten">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-icon delete-btn" onclick="window.app.components.admin.removeParticipant('${participant.id}')" title="Entfernen">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('') : '<div class="empty-participants">Noch keine Teilnehmer hinzugefügt</div>'}
+            </div>
+        `;
+    }
+
+    getParticipantStatusText(status) {
+        const statusTexts = {
+            'pending': 'Wartend',
+            'joined': 'Beigetreten',
+            'active': 'Aktiv',
+            'finished': 'Abgeschlossen'
+        };
+        return statusTexts[status] || 'Unbekannt';
+    }
+
+    async addParticipantFromInput() {
+        const nameInput = document.getElementById('participant-name');
+        const emailInput = document.getElementById('participant-email');
+        
+        if (!nameInput) return;
+
+        const name = nameInput.value.trim();
+        const email = emailInput ? emailInput.value.trim() : '';
+        
+        if (!name) {
+            this.app.showNotification('Bitte geben Sie einen Namen ein', 'warning');
+            return;
+        }
+
+        // Check for duplicate names
+        const existingParticipant = this.currentQuiz.participants?.find(p => 
+            p.name.toLowerCase() === name.toLowerCase()
+        );
+        
+        if (existingParticipant) {
+            this.app.showNotification('Ein Teilnehmer mit diesem Namen existiert bereits', 'warning');
+            return;
+        }
+
+        const participant = {
+            id: 'participant-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+            name: name,
+            email: email,
+            status: 'pending',
+            addedAt: new Date().toISOString()
+        };
+
+        if (!this.currentQuiz.participants) {
+            this.currentQuiz.participants = [];
+        }
+        
+        this.currentQuiz.participants.push(participant);
+        
+        // Immediately save to server
+        this.app.showLoading('Teilnehmer wird hinzugefügt...');
+        try {
+            await this.saveQuizToServer();
+            this.app.showNotification(`Teilnehmer "${name}" wurde hinzugefügt`, 'success');
+            
+            // Clear form and hide it
+            nameInput.value = '';
+            if (emailInput) emailInput.value = '';
+            this.hideAddParticipantForm();
+            
+            // Update participant list display
+            this.renderParticipantList();
+        } catch (error) {
+            // Remove participant from local array if server save failed
+            this.currentQuiz.participants = this.currentQuiz.participants.filter(p => p.id !== participant.id);
+            this.app.showNotification('Fehler beim Speichern des Teilnehmers: ' + error.message, 'error');
+        } finally {
+            this.app.hideLoading();
+        }
+    }
+
+    async addBulkParticipants() {
+        const bulkInput = document.getElementById('bulk-participants');
+        if (!bulkInput) return;
+
+        const names = bulkInput.value.split('\n')
+            .map(name => name.trim())
+            .filter(name => name.length > 0);
+
+        if (names.length === 0) {
+            this.app.showNotification('Bitte geben Sie mindestens einen Namen ein', 'warning');
+            return;
+        }
+
+        if (!this.currentQuiz.participants) {
+            this.currentQuiz.participants = [];
+        }
+
+        let addedCount = 0;
+        const duplicates = [];
+        const newParticipants = [];
+
+        names.forEach(name => {
+            // Check for duplicate names
+            const existingParticipant = this.currentQuiz.participants.find(p => 
+                p.name.toLowerCase() === name.toLowerCase()
+            );
+            
+            if (existingParticipant) {
+                duplicates.push(name);
+                return;
+            }
+
+            const participant = {
+                id: 'participant-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                name: name,
+                status: 'pending',
+                addedAt: new Date().toISOString()
+            };
+
+            this.currentQuiz.participants.push(participant);
+            newParticipants.push(participant);
+            addedCount++;
+        });
+
+        if (addedCount === 0) {
+            if (duplicates.length > 0) {
+                this.app.showNotification(`Alle Namen bereits vorhanden: ${duplicates.join(', ')}`, 'warning');
+            }
+            return;
+        }
+
+        // Save to server immediately
+        this.app.showLoading('Teilnehmer werden hinzugefügt...');
+        try {
+            await this.saveQuizToServer();
+            
+            // Clear form and hide it
+            bulkInput.value = '';
+            this.hideBulkAddForm();
+            
+            // Update participant list display
+            this.renderParticipantList();
+
+            this.app.showNotification(`${addedCount} Teilnehmer hinzugefügt`, 'success');
+            
+            if (duplicates.length > 0) {
+                this.app.showNotification(`Duplikate übersprungen: ${duplicates.join(', ')}`, 'warning');
+            }
+        } catch (error) {
+            // Remove newly added participants if server save failed
+            newParticipants.forEach(newParticipant => {
+                this.currentQuiz.participants = this.currentQuiz.participants.filter(p => p.id !== newParticipant.id);
+            });
+            this.app.showNotification('Fehler beim Speichern der Teilnehmer: ' + error.message, 'error');
+        } finally {
+            this.app.hideLoading();
+        }
+    }
+
+    async editParticipant(participantId) {
+        const participant = this.currentQuiz.participants?.find(p => p.id === participantId);
+        if (!participant) return;
+
+        const newName = prompt('Neuer Name:', participant.name);
+        if (!newName || newName.trim() === '') return;
+
+        const trimmedName = newName.trim();
+        
+        // Check for duplicate names (excluding current participant)
+        const existingParticipant = this.currentQuiz.participants.find(p => 
+            p.id !== participantId && p.name.toLowerCase() === trimmedName.toLowerCase()
+        );
+        
+        if (existingParticipant) {
+            this.app.showNotification('Ein Teilnehmer mit diesem Namen existiert bereits', 'warning');
+            return;
+        }
+
+        const oldName = participant.name;
+        participant.name = trimmedName;
+        participant.updatedAt = new Date().toISOString();
+        
+        // Save to server immediately
+        this.app.showLoading('Teilnehmer wird aktualisiert...');
+        try {
+            await this.saveQuizToServer();
+            this.renderParticipantList();
+            this.app.showNotification(`Teilnehmer umbenannt in "${trimmedName}"`, 'success');
+        } catch (error) {
+            // Revert changes if server save failed
+            participant.name = oldName;
+            delete participant.updatedAt;
+            this.app.showNotification('Fehler beim Speichern der Änderungen: ' + error.message, 'error');
+        } finally {
+            this.app.hideLoading();
+        }
+    }
+
+    async removeParticipant(participantId) {
+        const participant = this.currentQuiz.participants?.find(p => p.id === participantId);
+        if (!participant) return;
+
+        if (!confirm(`Teilnehmer "${participant.name}" wirklich entfernen?`)) {
+            return;
+        }
+
+        // Remove from local array
+        const originalParticipants = [...this.currentQuiz.participants];
+        this.currentQuiz.participants = this.currentQuiz.participants.filter(p => p.id !== participantId);
+        
+        // Save to server immediately
+        this.app.showLoading('Teilnehmer wird entfernt...');
+        try {
+            await this.saveQuizToServer();
+            this.renderParticipantList();
+            this.app.showNotification(`Teilnehmer "${participant.name}" entfernt`, 'success');
+        } catch (error) {
+            // Restore participant if server save failed
+            this.currentQuiz.participants = originalParticipants;
+            this.app.showNotification('Fehler beim Entfernen des Teilnehmers: ' + error.message, 'error');
+        } finally {
+            this.app.hideLoading();
+        }
+    }
+
+    // Utility Methods
+    copyQuizId() {
+        if (!this.currentQuiz?.id) {
+            this.app.showNotification('Keine Quiz-ID verfügbar', 'warning');
+            return;
+        }
+
+        // Create temporary input element
+        const tempInput = document.createElement('input');
+        tempInput.value = this.currentQuiz.id;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        
+        this.app.showNotification('Quiz-ID in Zwischenablage kopiert', 'success');
+    }
+
+    copyJoinLink() {
+        if (!this.currentQuiz?.id) {
+            this.app.showNotification('Quiz muss zuerst gespeichert werden', 'warning');
+            return;
+        }
+
+        const baseUrl = window.location.origin + window.location.pathname;
+        const joinUrl = `${baseUrl}?quiz=${this.currentQuiz.id}&join=true`;
+        
+        // Create temporary input element
+        const tempInput = document.createElement('input');
+        tempInput.value = joinUrl;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        
+        this.app.showNotification('Join-Link in Zwischenablage kopiert', 'success');
+    }
+
+    saveQuizAdminData() {
+        // Update quiz data from form
+        const titleInput = document.getElementById('quiz-title-admin');
+        const descInput = document.getElementById('quiz-description-admin');
+
+        if (titleInput) this.currentQuiz.title = titleInput.value;
+        if (descInput) this.currentQuiz.description = descInput.value;
+        
+        this.currentQuiz.updatedAt = new Date().toISOString();
+    }
+
+    // Server Communication Helper
+    async saveQuizToServer() {
+        if (!this.currentQuiz) {
+            throw new Error('Kein Quiz zum Speichern');
+        }
+
+        // Update quiz admin data from form
+        this.saveQuizAdminData();
+
+        const isNewQuiz = !this.currentQuiz.id || this.currentQuiz.id.length === 8; // New quizzes have 8-char IDs
+        
+        let savedQuiz;
+        if (isNewQuiz) {
+            savedQuiz = await this.cloudAPI.createQuiz(this.currentQuiz);
+            console.log('✅ Quiz created in backend:', savedQuiz.id);
         } else {
-            console.error('Quiz editor component not loaded');
+            savedQuiz = await this.cloudAPI.updateQuiz(this.currentQuiz.id, this.currentQuiz);
+            console.log('✅ Quiz updated in backend:', savedQuiz.id);
+        }
+        
+        // Update local references
+        this.currentQuiz = savedQuiz;
+        
+        // Update local list
+        const existingIndex = this.quizzes.findIndex(q => q.id === savedQuiz.id);
+        if (existingIndex >= 0) {
+            this.quizzes[existingIndex] = savedQuiz;
+        } else {
+            this.quizzes.push(savedQuiz);
+        }
+        
+        // Save to local cache
+        localStorage.setItem('admin-quizzes', JSON.stringify(this.quizzes));
+        
+        return savedQuiz;
+    }
+
+    async saveQuizAdmin() {
+        if (!this.currentQuiz) {
+            this.app.showNotification('Kein Quiz zum Speichern', 'error');
+            return;
+        }
+
+        this.saveQuizAdminData();
+
+        if (!this.currentQuiz.title.trim()) {
+            this.app.showNotification('Bitte geben Sie einen Quiz-Titel ein', 'warning');
+            return;
+        }
+
+        this.app.showLoading('Speichere Quiz...');
+        
+        try {
+            let savedQuiz;
+            const isNewQuiz = !this.currentQuiz.id || this.currentQuiz.id.length === 8; // New quizzes have 8-char IDs
+            
+            if (isNewQuiz) {
+                savedQuiz = await this.cloudAPI.createQuiz(this.currentQuiz);
+                console.log('✅ Quiz created in backend:', savedQuiz.id);
+            } else {
+                savedQuiz = await this.cloudAPI.updateQuiz(this.currentQuiz.id, this.currentQuiz);
+                console.log('✅ Quiz updated in backend:', savedQuiz.id);
+            }
+            
+            // Update local list
+            const existingIndex = this.quizzes.findIndex(q => q.id === this.currentQuiz.id);
+            if (existingIndex >= 0) {
+                this.quizzes[existingIndex] = savedQuiz;
+            } else {
+                this.quizzes.push(savedQuiz);
+            }
+            
+            // Update current quiz
+            this.currentQuiz = savedQuiz;
+            
+            localStorage.setItem('admin-quizzes', JSON.stringify(this.quizzes));
+            
+            this.app.hideLoading();
+            this.app.showNotification('Quiz erfolgreich gespeichert', 'success');
+            
+            // Reset save button
+            const saveBtn = document.getElementById('save-quiz-admin');
+            if (saveBtn) {
+                saveBtn.classList.remove('btn-warning');
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Gespeichert';
+            }
+            
+            // Update form with saved data
+            this.populateAdminForm();
+            
+        } catch (error) {
+            console.error('Failed to save quiz:', error);
+            
+            // Fallback: save locally
+            const existingIndex = this.quizzes.findIndex(q => q.id === this.currentQuiz.id);
+            if (existingIndex >= 0) {
+                this.quizzes[existingIndex] = this.currentQuiz;
+            } else {
+                this.quizzes.push(this.currentQuiz);
+            }
+            localStorage.setItem('admin-quizzes', JSON.stringify(this.quizzes));
+            
+            this.app.hideLoading();
+            this.app.showNotification('Quiz lokal gespeichert (Backend nicht verfügbar)', 'warning');
         }
     }
 
