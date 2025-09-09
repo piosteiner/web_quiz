@@ -57,6 +57,9 @@ class QuizMasterServer {
     }
 
     setupMiddleware() {
+        // Trust proxy for rate limiting and forwarded headers
+        this.app.set('trust proxy', true);
+        
         // Security middleware
         this.app.use(helmet({
             contentSecurityPolicy: false, // Disable for development
