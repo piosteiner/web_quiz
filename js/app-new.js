@@ -4,7 +4,7 @@
  */
 
 import CONFIG from './config.js';
-import API from './api.js?v=2.1.0';
+import CloudAPIService from './cloud-api.js?v=1.0.7';
 import realTimeService from './realtime.js';
 import { ComponentManager } from './core/component-manager.js';
 import { StateManager } from './core/state-manager.js';
@@ -15,8 +15,8 @@ class PiGiQuizApp {
         this.stateManager = new StateManager();
         this.componentManager = new ComponentManager(this);
         
-        // Initialize API service
-        this.api = API;
+        // Initialize services
+        this.cloudAPI = new CloudAPIService();
         this.realtime = realTimeService;
         
         // Legacy compatibility
@@ -157,76 +157,69 @@ class PiGiQuizApp {
         }
         
         try {
-            // Clean up existing components to prevent conflicts
-            await this.componentManager.cleanupComponent(componentName);
-            
-            // Component mapping with unified architecture
+            // Component mapping with new architecture
             const componentMap = {
                 'join': async () => {
                     const urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.get('quiz') && urlParams.get('join') === 'true') {
                         const { ParticipantJoin } = await import('./components/participant-join.js');
-                        return await this.componentManager.registerComponent('participantJoin', ParticipantJoin, params);
+                        const component = await this.componentManager.registerComponent('participantJoin', ParticipantJoin, params);
+                        this.components.participantJoin = component; // Legacy compatibility
+                        return component;
                     } else {
                         const { QuizParticipant } = await import('./components/quiz-participant.js');
-                        return await this.componentManager.registerComponent('join', QuizParticipant, params);
+                        const component = await this.componentManager.registerComponent('join', QuizParticipant, params);
+                        this.components.join = component; // Legacy compatibility
+                        return component;
                     }
                 },
                 'participantJoin': async () => {
                     const { ParticipantJoin } = await import('./components/participant-join.js');
-                    return await this.componentManager.registerComponent('participantJoin', ParticipantJoin, params);
+                    const component = await this.componentManager.registerComponent('participantJoin', ParticipantJoin, params);
+                    this.components.participantJoin = component;
+                    return component;
                 },
                 'participant': async () => {
                     const { Participant } = await import('./components/participant.js');
-                    return await this.componentManager.registerComponent('participant', Participant, params);
+                    const component = await this.componentManager.registerComponent('participant', Participant, params);
+                    this.components.participant = component;
+                    return component;
                 },
                 'admin': async () => {
-                    // Use unified admin component
-                    const { QuizAdmin } = await import('./components/quiz-admin.js?v=2.0.0');
-                    const adminComponent = await this.componentManager.registerComponent('admin', QuizAdmin, params);
-                    this.components.admin = adminComponent; // Legacy compatibility
+                    const QuizAdminModule = await import('./components/quiz-admin.js');
+                    const adminComponent = await this.componentManager.registerComponent('admin', QuizAdminModule.QuizAdmin, params);
+                    this.components.admin = adminComponent;
                     
-                    // Also register editor component for admin view
-                    const { QuizEditor } = await import('./components/quiz-editor.js');
-                    const editorComponent = await this.componentManager.registerComponent('editor', QuizEditor, params);
-                    this.components.editor = editorComponent; // Legacy compatibility
+                    // Also load editor for admin view
+                    const QuizEditorModule = await import('./components/quiz-editor.js');
+                    const editorComponent = await this.componentManager.registerComponent('editor', QuizEditorModule.QuizEditor, params);
+                    this.components.editor = editorComponent;
                     
                     return adminComponent;
                 },
                 'quiz-admin': async () => {
-                    // Use unified admin component
-                    const { QuizAdmin } = await import('./components/quiz-admin.js?v=2.0.0');
-                    const component = await this.componentManager.registerComponent('admin', QuizAdmin, params);
-                    this.components.admin = component; // Legacy compatibility
+                    const QuizAdminModule = await import('./components/quiz-admin.js');
+                    const component = await this.componentManager.registerComponent('admin', QuizAdminModule.QuizAdmin, params);
+                    this.components.admin = component;
                     return component;
                 },
                 'live': async () => {
                     const { LiveController } = await import('./components/live-controller.js');
-                    return await this.componentManager.registerComponent('live', LiveController, params);
+                    const component = await this.componentManager.registerComponent('live', LiveController, params);
+                    this.components.live = component;
+                    return component;
                 }
             };
 
-            const component = componentMap[componentName] ? await componentMap[componentName]() : null;
-            
-            if (!component) {
+            if (componentMap[componentName]) {
+                return await componentMap[componentName]();
+            } else {
                 console.warn(`Unknown component: ${componentName}`);
-                return null;
             }
-            
-            // Update legacy components reference
-            this.components[componentName] = component;
-            
-            return component;
             
         } catch (error) {
             console.error(`Error loading component ${componentName}:`, error);
             this.showNotification(`Fehler beim Laden der Komponente: ${error.message}`, 'error');
-            
-            // Try to recover by navigating to home
-            if (componentName !== 'home') {
-                console.log('Attempting recovery by navigating to home');
-                this.navigateTo('home');
-            }
         }
     }
 
@@ -381,12 +374,7 @@ class PiGiQuizApp {
 
     // API access for components
     getCloudAPI() {
-        return this.api;
-    }
-
-    // Getter method for backward compatibility
-    get cloudAPI() {
-        return this.api;
+        return this.cloudAPI;
     }
 
     getRealtime() {
