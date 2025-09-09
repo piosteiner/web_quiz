@@ -89,11 +89,11 @@ export class QuizAdmin {
         });
 
         this.boundEventHandlers.set('openEditorClick', () => {
-            this.app.navigateTo('admin');
-            setTimeout(() => {
-                document.getElementById('quiz-editor-view').style.display = 'block';
-                document.getElementById('quiz-admin-view').style.display = 'none';
-            }, 100);
+            if (this.currentQuiz) {
+                this.openQuizEditor();
+            } else {
+                this.app.showNotification('Bitte wählen Sie zuerst ein Quiz aus', 'warning');
+            }
         });
 
         this.boundEventHandlers.set('saveQuizClick', () => {
@@ -582,9 +582,36 @@ export class QuizAdmin {
     }
 
     showQuizList() {
+        console.log('📋 Switching to quiz list view');
         document.getElementById('quiz-admin-view').style.display = 'none';
+        document.getElementById('quiz-editor-view').style.display = 'none';
         document.getElementById('quiz-list-view').style.display = 'block';
         this.currentQuiz = null;
+        
+        // Ensure we're in the right app view
+        this.app.currentView = 'admin';
+        
+        // Update URL to reflect current state
+        if (window.location.hash !== '#admin') {
+            window.history.replaceState({ route: 'admin' }, '', '/#admin');
+        }
+    }
+
+    openQuizEditor() {
+        if (!this.currentQuiz) {
+            this.app.showNotification('Kein Quiz ausgewählt', 'warning');
+            return;
+        }
+        
+        // Hide admin views and show editor
+        document.getElementById('quiz-list-view').style.display = 'none';
+        document.getElementById('quiz-admin-view').style.display = 'none';
+        document.getElementById('quiz-editor-view').style.display = 'block';
+        
+        // Load the quiz in the editor
+        if (this.app.components.editor) {
+            this.app.components.editor.loadQuizForEditing(this.currentQuiz);
+        }
     }
 
     markAsChanged() {

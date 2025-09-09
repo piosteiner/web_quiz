@@ -109,8 +109,29 @@ export class QuizEditor {
         this.currentQuestions = [];
         this.hasUnsavedChanges = false;
         
-        // Notify admin component to show quiz list
-        this.app.components.admin.showQuizList();
+        // Clear auto-save timeout
+        if (this.autoSaveTimeout) {
+            clearTimeout(this.autoSaveTimeout);
+            this.autoSaveTimeout = null;
+        }
+        
+        // Properly navigate back to admin list view
+        this.app.navigateTo('admin');
+    }
+
+    loadQuizForEditing(quiz) {
+        console.log('📝 Loading quiz for editing:', quiz.title);
+        this.currentQuiz = { ...quiz };
+        this.currentQuestions = quiz.questions ? [...quiz.questions] : [];
+        this.isEditing = true;
+        this.hasUnsavedChanges = false;
+        
+        // Populate the editor with quiz data
+        this.populateEditor();
+        this.renderQuestions();
+        
+        // Show editor view
+        this.showEditor();
     }
 
     showEditor() {
