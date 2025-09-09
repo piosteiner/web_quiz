@@ -74,6 +74,13 @@ export class BaseComponent {
     }
 
     /**
+     * Cleanup method for backward compatibility
+     */
+    cleanup() {
+        this.destroy();
+    }
+
+    /**
      * Add event listener with automatic cleanup
      */
     addEventListener(element, event, handler, options = {}) {
@@ -193,6 +200,13 @@ export class BaseComponent {
      */
     getContainer() {
         return document.getElementById('content') || document.body;
+    }
+
+    /**
+     * jQuery-style DOM selector method
+     */
+    $(selector) {
+        return document.querySelector(selector);
     }
 
     /**

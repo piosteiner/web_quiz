@@ -53,7 +53,11 @@ export class ParticipantJoin extends BaseComponent {
     }
 
     showJoinIdForm() {
-        const container = document.getElementById('app');
+        const container = document.getElementById('app-container');
+        if (!container) {
+            console.error('App container not found');
+            return;
+        }
         container.innerHTML = `
             <div class="join-container">
                 <div class="join-card">
@@ -106,7 +110,11 @@ export class ParticipantJoin extends BaseComponent {
 
             this.app.hideLoading();
 
-            const container = document.getElementById('app');
+            const container = document.getElementById('app-container');
+            if (!container) {
+                console.error('App container not found');
+                return;
+            }
             container.innerHTML = `
                 <div class="join-container">
                     <div class="join-card">
@@ -167,7 +175,11 @@ export class ParticipantJoin extends BaseComponent {
             this.app.hideLoading();
             console.error('Failed to load quiz:', error);
             
-            const container = document.getElementById('app');
+            const container = document.getElementById('app-container');
+            if (!container) {
+                console.error('App container not found');
+                return;
+            }
             container.innerHTML = `
                 <div class="join-container">
                     <div class="join-card error">
@@ -279,7 +291,11 @@ export class ParticipantJoin extends BaseComponent {
     }
 
     showBasicParticipantInterface() {
-        const container = document.getElementById('app');
+        const container = document.getElementById('app-container');
+        if (!container) {
+            console.error('App container not found');
+            return;
+        }
         container.innerHTML = `
             <div class="participant-container">
                 <div class="participant-header">
