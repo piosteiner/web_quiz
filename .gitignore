@@ -30,6 +30,3 @@ Thumbs.db
 # Backup files
 *.bak
 *-old.*
-
-# Nginx configs (keep local, not in git)
-nginx-*.conf
