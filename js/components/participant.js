@@ -86,6 +86,52 @@ export class Participant {
                 this.updateParticipantCount(data.count);
             });
 
+            // New countdown and timer events
+            this.realtime.on('countdown-start', (data) => {
+                console.log('Countdown started:', data);
+                this.handleCountdownStart(data);
+            });
+
+            this.realtime.on('countdown-tick', (data) => {
+                console.log('Countdown tick:', data);
+                this.handleCountdownTick(data);
+            });
+
+            this.realtime.on('question-start', (data) => {
+                console.log('Question start with timer:', data);
+                this.handleQuestionTimerStart(data);
+            });
+
+            this.realtime.on('timer-update', (data) => {
+                console.log('Timer update:', data);
+                this.handleTimerUpdate(data);
+            });
+
+            this.realtime.on('timer-pause', (data) => {
+                console.log('Timer paused:', data);
+                this.handleTimerPause(data);
+            });
+
+            this.realtime.on('timer-resume', (data) => {
+                console.log('Timer resumed:', data);
+                this.handleTimerResume(data);
+            });
+
+            this.realtime.on('timer-restart', (data) => {
+                console.log('Timer restarted:', data);
+                this.handleTimerRestart(data);
+            });
+
+            this.realtime.on('question-close', (data) => {
+                console.log('Question closed:', data);
+                this.handleQuestionClose(data);
+            });
+
+            this.realtime.on('question-timeout', (data) => {
+                console.log('Question timeout:', data);
+                this.handleQuestionTimeout(data);
+            });
+
             this.websocketConnected = true;
             this.app.showNotification('Verbindung hergestellt', 'success');
             
@@ -669,5 +715,327 @@ export class Participant {
                 </div>
             </div>
         `;
+    }
+
+    // Countdown and Timer Event Handlers
+    handleCountdownStart(data) {
+        // Show full-screen countdown overlay
+        this.showCountdownOverlay(data.countdown);
+    }
+
+    handleCountdownTick(data) {
+        // Update countdown display
+        this.updateCountdownDisplay(data.countdown);
+    }
+
+    handleQuestionTimerStart(data) {
+        // Hide countdown and show question with timer
+        this.hideCountdownOverlay();
+        this.currentQuestion = data.question;
+        this.currentQuestionIndex = data.questionIndex;
+        this.timeRemaining = data.timeLimit;
+        this.questionStartTime = data.startTime;
+        
+        this.showQuestionInterface();
+        this.startParticipantTimer();
+    }
+
+    handleTimerUpdate(data) {
+        // Update timer display
+        this.timeRemaining = data.timeRemaining;
+        this.updateParticipantTimer(data.isLastTenSeconds);
+    }
+
+    handleTimerPause(data) {
+        // Pause timer display (but don't clear it)
+        this.pauseParticipantTimer();
+    }
+
+    handleTimerResume(data) {
+        // Resume timer display
+        this.resumeParticipantTimer();
+    }
+
+    handleTimerRestart(data) {
+        // Restart timer completely
+        this.timeRemaining = data.timeLimit;
+        this.questionStartTime = data.startTime;
+        this.restartParticipantTimer();
+    }
+
+    handleQuestionClose(data) {
+        // Question closed by admin
+        this.stopParticipantTimer();
+        this.disableAnswerButtons();
+        this.showCorrectAnswer(data.correctAnswer);
+    }
+
+    handleQuestionTimeout(data) {
+        // Question timed out
+        this.stopParticipantTimer();
+        this.disableAnswerButtons();
+        this.showCorrectAnswer(data.correctAnswer);
+        this.app.showNotification('Zeit abgelaufen!', 'warning');
+    }
+
+    // Countdown UI Methods
+    showCountdownOverlay(countdown) {
+        // Create full-screen countdown overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'countdown-overlay';
+        overlay.className = 'participant-countdown-overlay';
+        overlay.innerHTML = `
+            <div class="participant-countdown-number">${countdown}</div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        // Disable all other interactions
+        document.body.style.overflow = 'hidden';
+    }
+
+    updateCountdownDisplay(countdown) {
+        const countdownElement = document.querySelector('.participant-countdown-number');
+        if (countdownElement) {
+            countdownElement.textContent = countdown;
+            // Trigger animation by removing and re-adding class
+            countdownElement.style.animation = 'none';
+            setTimeout(() => {
+                countdownElement.style.animation = 'participantCountdown 1s ease-in-out';
+            }, 10);
+        }
+    }
+
+    hideCountdownOverlay() {
+        const overlay = document.getElementById('countdown-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        document.body.style.overflow = '';
+    }
+
+    // Participant Timer Methods
+    startParticipantTimer() {
+        // Create timer display in top-right corner
+        this.createTimerDisplay();
+        
+        // Start timer update loop
+        this.participantTimer = setInterval(() => {
+            this.updateTimerFromServer();
+        }, 100);
+    }
+
+    createTimerDisplay() {
+        // Remove existing timer if any
+        const existingTimer = document.getElementById('participant-timer');
+        if (existingTimer) {
+            existingTimer.remove();
+        }
+
+        // Create new timer display
+        const timer = document.createElement('div');
+        timer.id = 'participant-timer';
+        timer.className = 'participant-timer';
+        timer.innerHTML = `
+            <div class="participant-timer-display">
+                <span class="participant-timer-main">--:--</span>
+                <span class="participant-timer-ms">.0</span>
+            </div>
+        `;
+        
+        document.body.appendChild(timer);
+    }
+
+    updateParticipantTimer(isLastTenSeconds = false) {
+        const timer = document.getElementById('participant-timer');
+        const mainDisplay = document.querySelector('.participant-timer-main');
+        const msDisplay = document.querySelector('.participant-timer-ms');
+        
+        if (mainDisplay && msDisplay) {
+            const minutes = Math.floor(this.timeRemaining / 60);
+            const seconds = this.timeRemaining % 60;
+            const ms = Math.floor((this.timeRemaining * 1000) % 1000);
+            
+            mainDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            msDisplay.textContent = `.${Math.floor(ms / 100)}`;
+        }
+        
+        // Add warning class for last 10 seconds
+        if (timer) {
+            if (isLastTenSeconds && this.timeRemaining > 0) {
+                timer.classList.add('warning');
+            } else {
+                timer.classList.remove('warning');
+            }
+        }
+    }
+
+    updateTimerFromServer() {
+        // This would normally sync with server time, but for now just update display
+        this.updateParticipantTimer(this.timeRemaining <= 10);
+    }
+
+    pauseParticipantTimer() {
+        if (this.participantTimer) {
+            clearInterval(this.participantTimer);
+            this.participantTimer = null;
+        }
+        
+        // Add paused visual indicator
+        const timer = document.getElementById('participant-timer');
+        if (timer) {
+            timer.classList.add('paused');
+        }
+    }
+
+    resumeParticipantTimer() {
+        this.startParticipantTimer();
+        
+        // Remove paused visual indicator
+        const timer = document.getElementById('participant-timer');
+        if (timer) {
+            timer.classList.remove('paused');
+        }
+    }
+
+    restartParticipantTimer() {
+        this.stopParticipantTimer();
+        this.startParticipantTimer();
+    }
+
+    stopParticipantTimer() {
+        if (this.participantTimer) {
+            clearInterval(this.participantTimer);
+            this.participantTimer = null;
+        }
+        
+        // Remove timer display
+        const timer = document.getElementById('participant-timer');
+        if (timer) {
+            timer.remove();
+        }
+    }
+
+    // Question Interface Methods
+    showQuestionInterface() {
+        // This would update the existing question display
+        // The question UI should already be rendered, just needs to be shown
+        this.renderQuestionContent();
+    }
+
+    renderQuestionContent() {
+        const questionContainer = document.getElementById('question-container');
+        if (questionContainer && this.currentQuestion) {
+            questionContainer.innerHTML = `
+                <div class="question-header">
+                    <div class="question-number">
+                        Frage ${this.currentQuestionIndex + 1} von ${this.currentQuiz.questions.length}
+                    </div>
+                </div>
+                <div class="question-content">
+                    <h2 class="question-text">${this.currentQuestion.text}</h2>
+                    <div class="answers-container">
+                        ${this.currentQuestion.answers.map((answer, index) => `
+                            <button class="answer-option" data-answer-id="${answer.id}">
+                                <span class="answer-letter">${String.fromCharCode(65 + index)}</span>
+                                <span class="answer-text">${answer.text}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // Add click handlers to answer buttons
+            this.setupAnswerButtonHandlers();
+        }
+    }
+
+    setupAnswerButtonHandlers() {
+        const answerButtons = document.querySelectorAll('.answer-option');
+        answerButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (!button.disabled) {
+                    this.selectAnswer(button.dataset.answerId);
+                }
+            });
+        });
+    }
+
+    selectAnswer(answerId) {
+        // Disable all buttons after selection
+        this.disableAnswerButtons();
+        
+        // Record answer with timing
+        const answerTime = Date.now();
+        const timeUsed = Math.floor((answerTime - this.questionStartTime) / 1000);
+        
+        const answer = {
+            questionId: this.currentQuestion.id,
+            selectedAnswerId: answerId,
+            timeUsed: timeUsed,
+            timestamp: answerTime
+        };
+        
+        this.answers.push(answer);
+        
+        // Highlight selected answer
+        const selectedButton = document.querySelector(`[data-answer-id="${answerId}"]`);
+        if (selectedButton) {
+            selectedButton.classList.add('selected');
+        }
+        
+        // Send answer to server (with automatic save)
+        this.submitAnswerToServer(answer);
+    }
+
+    async submitAnswerToServer(answer) {
+        try {
+            const response = await this.cloudAPI.submitAnswer({
+                quizId: this.currentQuiz.id,
+                participantId: this.participant.participantId,
+                ...answer
+            });
+            
+            if (response.success) {
+                console.log('✅ Answer submitted and auto-saved');
+                this.score = response.currentScore || this.score;
+            }
+        } catch (error) {
+            console.error('Failed to submit answer:', error);
+            this.app.showNotification('Antwort konnte nicht gespeichert werden', 'error');
+        }
+    }
+
+    disableAnswerButtons() {
+        const answerButtons = document.querySelectorAll('.answer-option');
+        answerButtons.forEach(button => {
+            button.disabled = true;
+            button.style.pointerEvents = 'none';
+        });
+    }
+
+    showCorrectAnswer(correctAnswer) {
+        if (!correctAnswer) return;
+        
+        // Highlight correct answer
+        const correctButton = document.querySelector(`[data-answer-id="${correctAnswer.id}"]`);
+        if (correctButton) {
+            correctButton.classList.add('correct');
+        }
+        
+        // Show explanation if available
+        if (correctAnswer.explanation) {
+            const explanationDiv = document.createElement('div');
+            explanationDiv.className = 'answer-explanation';
+            explanationDiv.innerHTML = `
+                <h4>Erklärung:</h4>
+                <p>${correctAnswer.explanation}</p>
+            `;
+            
+            const questionContainer = document.getElementById('question-container');
+            if (questionContainer) {
+                questionContainer.appendChild(explanationDiv);
+            }
+        }
     }
 }

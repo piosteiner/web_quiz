@@ -15,8 +15,20 @@ export class LiveController {
         this.participants = new Map();
         this.leaderboard = [];
         this.isSessionActive = false;
-        this.timer = null;
-        this.timeRemaining = 30;
+        
+        // Enhanced timer system
+        this.questionTimer = null;
+        this.countdownTimer = null;
+        this.timeRemaining = 0;
+        this.questionTimeLimit = 30; // seconds
+        this.isQuestionActive = false;
+        this.isCountdownActive = false;
+        this.questionStartTime = null;
+        this.isPaused = false;
+        this.pausedTime = 0;
+        
+        // Auto-save timeout
+        this.autoSaveTimeout = null;
     }
 
     async init(params = {}) {
@@ -60,6 +72,23 @@ export class LiveController {
                     break;
                 case 'end-session':
                     this.endSession();
+                    break;
+                    
+                // New question control actions
+                case 'show-question':
+                    this.showCurrentQuestion();
+                    break;
+                case 'pause-timer':
+                    this.pauseQuestionTimer();
+                    break;
+                case 'resume-timer':
+                    this.resumeQuestionTimer();
+                    break;
+                case 'restart-timer':
+                    this.restartQuestionTimer();
+                    break;
+                case 'close-question':
+                    this.closeCurrentQuestion();
                     break;
                 case 'copy-join-url':
                     this.copyJoinURL();
@@ -117,6 +146,49 @@ export class LiveController {
                             <span class="stat-value" id="session-timer">00:00</span>
                             <span class="stat-label">Session Zeit</span>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Question Timer & Countdown Display -->
+                <div class="timer-display-card">
+                    <h4>Question Timer</h4>
+                    
+                    <!-- Countdown Display -->
+                    <div id="admin-countdown-display" class="countdown-display" style="display: none;">
+                        <div class="countdown-number">5</div>
+                    </div>
+                    
+                    <!-- Question Timer Display -->
+                    <div id="admin-timer-display" class="timer-display">
+                        <div class="timer-main">--:--</div>
+                        <div class="timer-ms">.0</div>
+                    </div>
+                    
+                    <!-- Timer Status -->
+                    <div class="timer-status">
+                        <span id="timer-status-text">Bereit</span>
+                    </div>
+                </div>
+
+                <!-- Question Controls -->
+                <div class="question-controls-card">
+                    <h4>Fragen Steuerung</h4>
+                    <div class="control-buttons question-control-buttons">
+                        <button class="btn btn-primary" data-action="show-question" id="show-question-btn">
+                            <i class="fas fa-eye"></i> Frage anzeigen
+                        </button>
+                        <button class="btn btn-warning" data-action="pause-timer" id="pause-timer-btn" disabled>
+                            <i class="fas fa-pause"></i> Timer pausieren
+                        </button>
+                        <button class="btn btn-success" data-action="resume-timer" id="resume-timer-btn" disabled>
+                            <i class="fas fa-play"></i> Timer fortsetzen
+                        </button>
+                        <button class="btn btn-info" data-action="restart-timer" id="restart-timer-btn" disabled>
+                            <i class="fas fa-redo"></i> Timer neu starten
+                        </button>
+                        <button class="btn btn-danger" data-action="close-question" id="close-question-btn" disabled>
+                            <i class="fas fa-times"></i> Frage schließen
+                        </button>
                     </div>
                 </div>
 
@@ -209,6 +281,7 @@ export class LiveController {
         `;
 
         this.updateQuestionPreview();
+        this.updateAdminControls();
     }
 
     // Session Control Methods
@@ -493,5 +566,278 @@ export class LiveController {
                 this.app.showNotification('Kopieren fehlgeschlagen', 'error');
             });
         }
+    }
+
+    // Question Control Methods
+    async showCurrentQuestion() {
+        if (!this.quiz?.questions[this.currentQuestionIndex]) {
+            this.app.showNotification('Keine Frage verfügbar', 'error');
+            return;
+        }
+
+        if (this.isCountdownActive || this.isQuestionActive) {
+            this.app.showNotification('Eine Frage ist bereits aktiv', 'warning');
+            return;
+        }
+
+        // Get question time limit from quiz settings or default
+        this.questionTimeLimit = this.quiz.settings?.timePerQuestion || 30;
+        
+        // Start 5-second countdown
+        await this.startQuestionCountdown();
+    }
+
+    async startQuestionCountdown() {
+        this.isCountdownActive = true;
+        let countdown = 5;
+
+        // Notify all participants about countdown start
+        this.realtime.emit('countdown-start', {
+            sessionId: this.sessionId,
+            countdown: countdown
+        });
+
+        // Update admin interface
+        this.updateCountdownDisplay(countdown);
+
+        // Start countdown timer
+        this.countdownTimer = setInterval(() => {
+            countdown--;
+            
+            if (countdown > 0) {
+                // Update countdown on all interfaces
+                this.realtime.emit('countdown-tick', {
+                    sessionId: this.sessionId,
+                    countdown: countdown
+                });
+                this.updateCountdownDisplay(countdown);
+            } else {
+                // Countdown finished, start question
+                clearInterval(this.countdownTimer);
+                this.countdownTimer = null;
+                this.isCountdownActive = false;
+                this.startQuestionTimer();
+            }
+        }, 1000);
+
+        // Auto-save session state
+        await this.saveSessionStateToServer();
+    }
+
+    startQuestionTimer() {
+        this.isQuestionActive = true;
+        this.isPaused = false;
+        this.pausedTime = 0;
+        this.questionStartTime = Date.now();
+        this.timeRemaining = this.questionTimeLimit;
+
+        // Notify all participants that question is now active
+        this.realtime.emit('question-start', {
+            sessionId: this.sessionId,
+            questionIndex: this.currentQuestionIndex,
+            question: this.quiz.questions[this.currentQuestionIndex],
+            timeLimit: this.questionTimeLimit,
+            startTime: this.questionStartTime
+        });
+
+        // Start timer for admin interface
+        this.questionTimer = setInterval(() => {
+            if (!this.isPaused) {
+                const elapsed = Math.floor((Date.now() - this.questionStartTime - this.pausedTime) / 1000);
+                this.timeRemaining = Math.max(0, this.questionTimeLimit - elapsed);
+
+                // Update admin interface
+                this.updateTimerDisplay();
+
+                // Broadcast timer update to participants
+                this.realtime.emit('timer-update', {
+                    sessionId: this.sessionId,
+                    timeRemaining: this.timeRemaining,
+                    isLastTenSeconds: this.timeRemaining <= 10
+                });
+
+                // Auto-close question when time runs out
+                if (this.timeRemaining <= 0) {
+                    this.timeoutQuestion();
+                }
+            }
+        }, 100); // Update every 100ms for smooth display
+    }
+
+    pauseQuestionTimer() {
+        if (!this.isQuestionActive || this.isPaused) return;
+
+        this.isPaused = true;
+        this.pauseStartTime = Date.now();
+
+        // Notify participants
+        this.realtime.emit('timer-pause', {
+            sessionId: this.sessionId,
+            timeRemaining: this.timeRemaining
+        });
+
+        // Update admin interface
+        this.updateAdminControls();
+        this.app.showNotification('Timer pausiert', 'info');
+    }
+
+    resumeQuestionTimer() {
+        if (!this.isQuestionActive || !this.isPaused) return;
+
+        this.pausedTime += Date.now() - this.pauseStartTime;
+        this.isPaused = false;
+
+        // Notify participants
+        this.realtime.emit('timer-resume', {
+            sessionId: this.sessionId,
+            timeRemaining: this.timeRemaining
+        });
+
+        // Update admin interface
+        this.updateAdminControls();
+        this.app.showNotification('Timer fortgesetzt', 'info');
+    }
+
+    async restartQuestionTimer() {
+        if (!this.isQuestionActive) return;
+
+        // Clear existing timer
+        if (this.questionTimer) {
+            clearInterval(this.questionTimer);
+            this.questionTimer = null;
+        }
+
+        // Reset and restart
+        this.isPaused = false;
+        this.pausedTime = 0;
+        this.questionStartTime = Date.now();
+        this.timeRemaining = this.questionTimeLimit;
+
+        // Notify participants
+        this.realtime.emit('timer-restart', {
+            sessionId: this.sessionId,
+            timeLimit: this.questionTimeLimit,
+            startTime: this.questionStartTime
+        });
+
+        // Restart timer
+        this.startQuestionTimer();
+        this.app.showNotification('Timer neu gestartet', 'info');
+
+        // Auto-save session state
+        await this.saveSessionStateToServer();
+    }
+
+    async closeCurrentQuestion() {
+        if (!this.isQuestionActive) return;
+
+        // Clear timers
+        if (this.questionTimer) {
+            clearInterval(this.questionTimer);
+            this.questionTimer = null;
+        }
+
+        this.isQuestionActive = false;
+        this.isPaused = false;
+
+        // Notify participants that question is closed
+        this.realtime.emit('question-close', {
+            sessionId: this.sessionId,
+            questionIndex: this.currentQuestionIndex,
+            correctAnswer: this.quiz.questions[this.currentQuestionIndex].answers.find(a => a.correct)
+        });
+
+        // Update admin interface
+        this.updateAdminControls();
+        this.updateTimerDisplay();
+        this.app.showNotification('Frage geschlossen', 'success');
+
+        // Auto-save session state
+        await this.saveSessionStateToServer();
+    }
+
+    timeoutQuestion() {
+        // Question time has run out
+        this.realtime.emit('question-timeout', {
+            sessionId: this.sessionId,
+            questionIndex: this.currentQuestionIndex,
+            correctAnswer: this.quiz.questions[this.currentQuestionIndex].answers.find(a => a.correct)
+        });
+
+        this.closeCurrentQuestion();
+    }
+
+    // UI Update Methods
+    updateCountdownDisplay(countdown) {
+        const countdownElement = document.getElementById('admin-countdown-display');
+        if (countdownElement) {
+            countdownElement.innerHTML = countdown > 0 ? 
+                `<div class="countdown-number">${countdown}</div>` : 
+                '<div class="countdown-finished">START!</div>';
+            countdownElement.style.display = countdown > 0 ? 'block' : 'none';
+        }
+    }
+
+    updateTimerDisplay() {
+        const timerElement = document.getElementById('admin-timer-display');
+        if (timerElement) {
+            const minutes = Math.floor(this.timeRemaining / 60);
+            const seconds = this.timeRemaining % 60;
+            const milliseconds = Math.floor((this.timeRemaining * 1000) % 1000);
+            
+            timerElement.innerHTML = `
+                <div class="timer-main">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+                <div class="timer-ms">.${Math.floor(milliseconds / 100)}</div>
+            `;
+            
+            // Add visual warning for last 10 seconds
+            if (this.timeRemaining <= 10 && this.timeRemaining > 0) {
+                timerElement.classList.add('timer-warning');
+            } else {
+                timerElement.classList.remove('timer-warning');
+            }
+        }
+    }
+
+    updateAdminControls() {
+        const showBtn = document.querySelector('[data-action="show-question"]');
+        const pauseBtn = document.querySelector('[data-action="pause-timer"]');
+        const resumeBtn = document.querySelector('[data-action="resume-timer"]');
+        const restartBtn = document.querySelector('[data-action="restart-timer"]');
+        const closeBtn = document.querySelector('[data-action="close-question"]');
+
+        if (showBtn) showBtn.disabled = this.isQuestionActive || this.isCountdownActive;
+        if (pauseBtn) pauseBtn.disabled = !this.isQuestionActive || this.isPaused;
+        if (resumeBtn) resumeBtn.disabled = !this.isQuestionActive || !this.isPaused;
+        if (restartBtn) restartBtn.disabled = !this.isQuestionActive;
+        if (closeBtn) closeBtn.disabled = !this.isQuestionActive;
+    }
+
+    // Auto-save helper
+    async saveSessionStateToServer() {
+        if (this.autoSaveTimeout) {
+            clearTimeout(this.autoSaveTimeout);
+        }
+
+        this.autoSaveTimeout = setTimeout(async () => {
+            try {
+                const sessionState = {
+                    sessionId: this.sessionId,
+                    currentQuestionIndex: this.currentQuestionIndex,
+                    isQuestionActive: this.isQuestionActive,
+                    isCountdownActive: this.isCountdownActive,
+                    questionStartTime: this.questionStartTime,
+                    timeRemaining: this.timeRemaining,
+                    isPaused: this.isPaused,
+                    pausedTime: this.pausedTime,
+                    participants: Array.from(this.participants.values())
+                };
+
+                await this.cloudAPI.updateSessionState(this.sessionId, sessionState);
+                console.log('✅ Session state auto-saved');
+            } catch (error) {
+                console.warn('Session state auto-save failed:', error.message);
+            }
+        }, 1000); // Auto-save after 1 second
     }
 }

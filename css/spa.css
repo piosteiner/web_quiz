@@ -4001,3 +4001,330 @@ p {
         flex-direction: column;
     }
 }
+
+/* ===== LIVE QUIZ TIMER & COUNTDOWN STYLES ===== */
+
+/* Timer Display Card */
+.timer-display-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: var(--space-6);
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    margin-bottom: var(--space-6);
+}
+
+.timer-display-card h4 {
+    margin-bottom: var(--space-4);
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+/* Countdown Display */
+.countdown-display {
+    margin: var(--space-6) 0;
+    position: relative;
+}
+
+.countdown-number {
+    font-size: 8rem;
+    font-weight: 900;
+    color: var(--primary-color);
+    text-shadow: 0 4px 20px rgba(108, 92, 231, 0.3);
+    animation: countdownPulse 1s ease-in-out;
+    line-height: 1;
+}
+
+.countdown-finished {
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--success-color);
+    text-shadow: 0 4px 20px rgba(0, 184, 148, 0.3);
+    animation: startPulse 0.5s ease-in-out;
+}
+
+@keyframes countdownPulse {
+    0% { 
+        transform: scale(0.8); 
+        opacity: 0; 
+    }
+    50% { 
+        transform: scale(1.1); 
+        opacity: 1; 
+    }
+    100% { 
+        transform: scale(1); 
+        opacity: 1; 
+    }
+}
+
+@keyframes startPulse {
+    0% { 
+        transform: scale(1); 
+        opacity: 1; 
+    }
+    50% { 
+        transform: scale(1.2); 
+        opacity: 0.8; 
+    }
+    100% { 
+        transform: scale(1); 
+        opacity: 1; 
+    }
+}
+
+/* Question Timer Display */
+.timer-display {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--space-1);
+    margin: var(--space-4) 0;
+    padding: var(--space-4);
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.timer-main {
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--text-color);
+    font-family: 'Courier New', monospace;
+    line-height: 1;
+}
+
+.timer-ms {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+}
+
+.timer-display.timer-warning {
+    border-color: var(--danger-color);
+    background: rgba(232, 67, 147, 0.1);
+    animation: timerWarning 1s ease-in-out infinite;
+}
+
+.timer-display.timer-warning .timer-main {
+    color: var(--danger-color);
+}
+
+@keyframes timerWarning {
+    0%, 100% { 
+        border-color: var(--danger-color);
+        box-shadow: 0 0 0 0 rgba(232, 67, 147, 0.4);
+    }
+    50% { 
+        border-color: var(--danger-color);
+        box-shadow: 0 0 0 10px rgba(232, 67, 147, 0);
+    }
+}
+
+/* Timer Status */
+.timer-status {
+    margin-top: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    background: var(--bg-tertiary);
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.timer-status span {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Question Control Buttons */
+.question-controls-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: var(--space-6);
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--space-6);
+}
+
+.question-controls-card h4 {
+    margin-bottom: var(--space-4);
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.question-control-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-3);
+}
+
+.question-control-buttons .btn {
+    padding: var(--space-3) var(--space-4);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.question-control-buttons .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.question-control-buttons .btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+/* Participant Interface Styles */
+.participant-countdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(10px);
+}
+
+.participant-countdown-number {
+    font-size: 20rem;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 0 50px rgba(255, 255, 255, 0.5);
+    animation: participantCountdown 1s ease-in-out;
+}
+
+@keyframes participantCountdown {
+    0% { 
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    30% { 
+        transform: scale(1.2);
+        opacity: 1;
+    }
+    70% { 
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% { 
+        transform: scale(0.8);
+        opacity: 0;
+    }
+}
+
+.participant-timer {
+    position: fixed;
+    top: var(--space-4);
+    right: var(--space-4);
+    background: var(--card-bg);
+    padding: var(--space-3) var(--space-4);
+    border-radius: 8px;
+    box-shadow: var(--shadow-heavy);
+    border: 2px solid var(--border-color);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.participant-timer.warning {
+    border-color: var(--danger-color);
+    animation: participantTimerWarning 1s ease-in-out infinite;
+}
+
+@keyframes participantTimerWarning {
+    0%, 100% { 
+        border-color: var(--danger-color);
+        box-shadow: 0 0 0 0 rgba(232, 67, 147, 0.4), var(--shadow-heavy);
+    }
+    50% { 
+        border-color: var(--danger-color);
+        box-shadow: 0 0 0 8px rgba(232, 67, 147, 0), var(--shadow-heavy);
+    }
+}
+
+.participant-timer-display {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    font-family: 'Courier New', monospace;
+}
+
+.participant-timer-main {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--text-color);
+}
+
+.participant-timer-ms {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.participant-timer.warning .participant-timer-main {
+    color: var(--danger-color);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .countdown-number {
+        font-size: 6rem;
+    }
+    
+    .timer-main {
+        font-size: 3rem;
+    }
+    
+    .timer-ms {
+        font-size: 1.5rem;
+    }
+    
+    .participant-countdown-number {
+        font-size: 15rem;
+    }
+    
+    .question-control-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .participant-timer {
+        top: var(--space-2);
+        right: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+    }
+    
+    .participant-timer-main {
+        font-size: 1.2rem;
+    }
+    
+    .participant-timer-ms {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .countdown-number {
+        font-size: 4rem;
+    }
+    
+    .timer-main {
+        font-size: 2.5rem;
+    }
+    
+    .timer-ms {
+        font-size: 1.2rem;
+    }
+    
+    .participant-countdown-number {
+        font-size: 12rem;
+    }
+}

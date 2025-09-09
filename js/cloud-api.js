@@ -183,6 +183,44 @@ class CloudAPIService {
         }
     }
 
+    async updateSessionState(sessionId, sessionState) {
+        try {
+            if (!this.isOnline) {
+                return this.queueOperation('UPDATE_SESSION_STATE', { id: sessionId, state: sessionState });
+            }
+
+            const endpoint = CONFIG.ENDPOINTS.UPDATE_SESSION_STATE?.replace(':id', sessionId) || `/api/sessions/${sessionId}/state`;
+            const response = await this.makeRequest(endpoint, {
+                method: 'PUT',
+                body: JSON.stringify(sessionState)
+            });
+            
+            console.log('✅ Session state updated on server');
+            return response;
+        } catch (error) {
+            throw new Error(`Session-Status konnte nicht aktualisiert werden: ${error.message}`);
+        }
+    }
+
+    async submitAnswer(answerData) {
+        try {
+            if (!this.isOnline) {
+                return this.queueOperation('SUBMIT_ANSWER', answerData);
+            }
+
+            const endpoint = CONFIG.ENDPOINTS.SUBMIT_ANSWER || '/api/answers/submit';
+            const response = await this.makeRequest(endpoint, {
+                method: 'POST',
+                body: JSON.stringify(answerData)
+            });
+            
+            console.log('✅ Answer submitted and saved to server');
+            return response;
+        } catch (error) {
+            throw new Error(`Antwort konnte nicht gespeichert werden: ${error.message}`);
+        }
+    }
+
     async getSessionResults(sessionId) {
         try {
             const endpoint = CONFIG.ENDPOINTS.SESSION_RESULTS.replace(':id', sessionId);
@@ -289,6 +327,10 @@ class CloudAPIService {
                 return await this.updateQuiz(operation.data.id, operation.data.data);
             case 'DELETE_QUIZ':
                 return await this.deleteQuiz(operation.data.id);
+            case 'UPDATE_SESSION_STATE':
+                return await this.updateSessionState(operation.data.id, operation.data.state);
+            case 'SUBMIT_ANSWER':
+                return await this.submitAnswer(operation.data);
             default:
                 throw new Error(`Unbekannter Operationstyp: ${operation.type}`);
         }
