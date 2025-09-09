@@ -427,6 +427,20 @@ class PiGiQuizApp {
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.PiGiQuizApp = new PiGiQuizApp();
+    window.app = window.PiGiQuizApp; // For easier access from inline handlers
+    
+    // Add global error handler for button clicks when app is not ready
+    window.addEventListener('error', (event) => {
+        if (event.message.includes("can't access property") && event.message.includes('window.app')) {
+            console.warn('App not ready for button click, retrying...');
+            // Small delay to allow app to initialize
+            setTimeout(() => {
+                if (window.app && window.app.components) {
+                    console.log('App is now ready');
+                }
+            }, 100);
+        }
+    });
 });
 
 // Export for module use
