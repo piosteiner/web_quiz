@@ -3,7 +3,7 @@
  * Single import point for all common functionality
  */
 
-// Re-export everything from individual utility modules
+// Import and re-export everything from individual utility modules
 export { escapeHTML, validateQuestionText, validateQuizTitle, validateParticipantName } from './security.js';
 export { 
     getAnswerLetter, 
@@ -16,6 +16,20 @@ export {
     CSS_CLASSES 
 } from './common.js';
 export { BaseComponent } from './base-component.js';
+
+// Import for use in default export
+import { escapeHTML, validateQuestionText, validateQuizTitle, validateParticipantName } from './security.js';
+import { 
+    getAnswerLetter, 
+    formatDate, 
+    formatTime, 
+    Templates, 
+    EventHelpers, 
+    Validators, 
+    generateId, 
+    CSS_CLASSES 
+} from './common.js';
+import { BaseComponent } from './base-component.js';
 
 // Additional consolidated utilities
 export class QuizUtils {
