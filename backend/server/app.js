@@ -28,7 +28,7 @@ class QuizMasterServer {
                         "http://localhost:3002", 
                         "http://localhost:8080",
                         "https://quiz.piogino.ch",
-                        "https://quiz-backend.piogino.ch"
+                        "https://piosteiner.github.io"
                     ];
                     
                     if (!origin) return callback(null, true);
@@ -71,7 +71,7 @@ class QuizMasterServer {
             "http://localhost:3002", 
             "http://localhost:8080",
             "https://quiz.piogino.ch",
-            "https://quiz-backend.piogino.ch"
+            "https://piosteiner.github.io"
         ];
         
         this.app.use(cors({

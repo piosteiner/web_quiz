@@ -37,7 +37,7 @@ class ServerError extends APIError {
  */
 class APIService {
     constructor() {
-        this.baseURL = CONFIG.API_BASE_URL || 'https://quiz-backend.piogino.ch/api';
+        this.baseURL = CONFIG.API_BASE_URL || 'http://83.228.207.199:3002/api';
         this.defaultHeaders = {
             'Content-Type': 'application/json'
         };
