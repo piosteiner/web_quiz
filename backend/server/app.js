@@ -57,6 +57,11 @@ class QuizMasterServer {
     }
 
     setupMiddleware() {
+        // Trust proxy for production environments (needed for rate limiting)
+        if (process.env.NODE_ENV === 'production') {
+            this.app.set('trust proxy', 1);
+        }
+        
         // Security middleware
         this.app.use(helmet({
             contentSecurityPolicy: false, // Disable for development
