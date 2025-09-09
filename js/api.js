@@ -221,7 +221,18 @@ class APIService {
 
     async login(email, password) {
         try {
-            const response = await this.post('/auth/login', { email, password });
+            // Clear any existing authentication before login
+            this.logout();
+            
+            // Make login request without authentication headers
+            const response = await this.makeRequest('/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                    // Explicitly no Authorization header
+                },
+                body: JSON.stringify({ email, password })
+            });
             
             this.authToken = response.token;
             this.currentUser = response.user;
