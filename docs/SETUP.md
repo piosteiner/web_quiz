@@ -17,8 +17,7 @@ Complete setup guide for developing the QuizMaster quiz platform.
 git clone https://github.com/piosteiner/web_quiz.git
 cd web_quiz
 
-# Install backend dependencies
-cd backend
+# Install dependencies
 npm install
 
 # Setup environment
@@ -26,7 +25,7 @@ cp .env.example .env
 ```
 
 ### 2. Configure Environment
-Edit `backend/.env`:
+Edit `.env`:
 ```bash
 # Basic configuration
 NODE_ENV=development
@@ -40,7 +39,10 @@ ALLOWED_ORIGINS=http://localhost:3002,http://127.0.0.1:3002
 
 ### 3. Start Development Server
 ```bash
-# From backend directory
+# Install dependencies (from project root)
+npm install
+
+# Start server
 npm run dev
 
 # Or start with PM2 for production-like environment
@@ -52,46 +54,46 @@ npm run production
 - **Admin Panel**: http://localhost:3002/html/admin.html
 - **API**: http://localhost:3002/api/health
 
-## 📁 Project Structure Deep Dive
+## 📁 Project Structure
 
 ```
-web_quiz/
-├── 🌐 Frontend Files (Root)
-│   ├── html/
-│   │   ├── admin.html          # Quiz creation interface
-│   │   ├── join.html           # Participant join page
-│   │   └── live-control.html   # Real-time quiz control
-│   ├── js/
-│   │   ├── main.js             # Core frontend logic
-│   │   ├── realtime.js         # Socket.IO integration
-│   │   ├── admin.js            # Admin panel functionality
-│   │   └── join.js             # Participant functionality
-│   ├── css/
-│   │   ├── styles.css          # Main stylesheet
-│   │   └── components/         # Component-specific styles
-│   └── index.html              # Landing page
-├── ⚙️ Backend/ (Server)
-│   ├── server/
-│   │   ├── app.js              # Main Express application
-│   │   ├── quiz-manager.js     # Quiz logic and storage
-│   │   ├── session-manager.js  # Live session handling
-│   │   └── websocket-handler.js # Real-time communication
-│   ├── routes/
-│   │   ├── quizzes.js          # Quiz CRUD operations
-│   │   ├── sessions.js         # Session management
-│   │   └── participants.js     # Participant handling
-│   ├── middleware/
-│   │   ├── auth.js             # Authentication (if enabled)
-│   │   ├── rate-limiter.js     # API rate limiting
-│   │   └── error-handler.js    # Global error handling
-│   ├── data/                   # Runtime data (gitignored)
-│   ├── logs/                   # Application logs (gitignored)
-│   ├── uploads/                # File uploads (gitignored)
-│   └── package.json            # Backend dependencies
+quiz-platform/
+├── 🌐 Frontend Files
+│   ├── index.html              # Landing page
+│   ├── css/                    # Stylesheets
+│   │   ├── spa.css            # Main styles
+│   │   └── components/        # Component-specific styles
+│   └── js/                     # Frontend JavaScript
+│       ├── api.js              # API communication
+│       ├── config.js           # Environment configuration
+│       ├── components/         # UI components
+│       └── utils/              # Shared utilities
+├── ⚙️ Server (Backend)
+│   ├── app.js                  # Main Express application
+│   ├── quiz-manager.js         # Quiz logic and storage
+│   ├── session-manager.js      # Live session handling
+│   ├── websocket-handler.js    # Real-time communication
+│   ├── routes/                 # API route handlers
+│   │   ├── quizzes.js         # Quiz CRUD operations
+│   │   ├── sessions.js        # Session management
+│   │   └── participants.js    # Participant handling
+│   ├── middleware/             # Express middleware
+│   │   ├── auth.js            # Authentication
+│   │   ├── rate-limiter.js    # API rate limiting
+│   │   └── error-handler.js   # Global error handling
+│   └── utils/                  # Server utilities
+├── 📊 Runtime Data (gitignored)
+│   ├── data/                   # Quiz and session storage
+│   ├── logs/                   # Application logs
+│   └── uploads/                # File uploads
+├── ⚙️ Configuration
+│   ├── package.json            # Dependencies
+│   ├── ecosystem.config.js     # PM2 configuration
+│   ├── .env                    # Environment variables
+│   └── nginx-quiz-platform.conf # Nginx proxy config
 └── 📚 Documentation
-    ├── API.md                  # API documentation
-    ├── SETUP.md                # This file
-    └── CONTRIBUTING.md         # Contribution guidelines
+    ├── docs/SETUP.md           # This file
+    └── README.md               # Project overview
 ```
 
 ## 🔧 Development Workflow
@@ -103,13 +105,13 @@ web_quiz/
 4. **Debug**: Use browser developer tools
 
 ### Backend Development
-1. **Edit Server Code**: Modify files in `backend/server/`
+1. **Edit Server Code**: Modify files in `server/`
 2. **Restart Server**: Use `npm run dev` for auto-restart with nodemon
 3. **Test API**: Use tools like Postman or curl
-4. **Check Logs**: Monitor console output or log files
+4. **Check Logs**: Monitor console output or `logs/` directory
 
 ### Database/Storage
-- **Development**: Uses file-based storage in `backend/data/`
+- **Development**: Uses file-based storage in `data/`
 - **Production**: Can be configured for external databases
 - **Data Protection**: All data directories are gitignored
 
@@ -162,7 +164,6 @@ web_quiz/
 ### Run Tests
 ```bash
 # Backend tests
-cd backend
 npm test
 
 # Frontend tests (if available)

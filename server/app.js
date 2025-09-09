@@ -114,8 +114,8 @@ class QuizMasterServer {
         // Rate limiting
         this.app.use('/api/', rateLimiter);
         
-        // Static files - serve from project root
-        const staticPath = path.join(__dirname, '../../');  // Up two levels to project root
+        // Static files - serve from project root  
+        const staticPath = path.join(__dirname, '../');  // Up one level to project root
         
         this.app.use(express.static(staticPath, {
             maxAge: process.env.NODE_ENV === 'production' ? '1y' : '0',
