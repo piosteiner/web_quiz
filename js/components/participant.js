@@ -1,7 +1,9 @@
 /**
  * Participant Component
- * Handles the complete participant quiz experience including answering questions and leaderboard
+ * Handles the participant interface during live quiz sessions
  */
+
+import { escapeHTML } from '../utils/security.js';
 
 export class Participant {
     constructor(app) {
@@ -286,13 +288,13 @@ export class Participant {
 
                 <div class="question-content">
                     <div class="question-card">
-                        <h2 class="question-text">${question.text}</h2>
+                        <h2 class="question-text">${escapeHTML(question.text)}</h2>
                         
                         <div class="answers-container">
                             ${question.answers.map((answer, index) => `
                                 <button class="answer-option" data-answer-id="${answer.id}" data-answer-index="${index}">
                                     <span class="answer-letter">${String.fromCharCode(65 + index)}</span>
-                                    <span class="answer-text">${answer.text}</span>
+                                    <span class="answer-text">${escapeHTML(answer.text)}</span>
                                 </button>
                             `).join('')}
                         </div>
@@ -619,7 +621,7 @@ export class Participant {
                             ${index === 0 ? '<i class="fas fa-crown"></i>' : ''}
                         </div>
                         <div class="participant-info">
-                            <span class="name">${participant.name}</span>
+                            <span class="name">${escapeHTML(participant.name)}</span>
                             <span class="details">${participant.correctAnswers || 0} richtig</span>
                         </div>
                         <div class="score">${participant.score || 0}</div>
@@ -933,12 +935,12 @@ export class Participant {
                     </div>
                 </div>
                 <div class="question-content">
-                    <h2 class="question-text">${this.currentQuestion.text}</h2>
+                    <h2 class="question-text">${escapeHTML(this.currentQuestion.text)}</h2>
                     <div class="answers-container">
                         ${this.currentQuestion.answers.map((answer, index) => `
                             <button class="answer-option" data-answer-id="${answer.id}">
                                 <span class="answer-letter">${String.fromCharCode(65 + index)}</span>
-                                <span class="answer-text">${answer.text}</span>
+                                <span class="answer-text">${escapeHTML(answer.text)}</span>
                             </button>
                         `).join('')}
                     </div>

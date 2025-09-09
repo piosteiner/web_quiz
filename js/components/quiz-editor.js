@@ -1,7 +1,9 @@
 /**
  * Quiz Editor Component
- * Handles quiz creation, editing, and question management
+ * Handles quiz questions, answers, and quiz settings
  */
+
+import { escapeHTML, validateQuestionText } from '../utils/security.js';
 
 export class QuizEditor {
     constructor(app) {
@@ -553,7 +555,7 @@ export class QuizEditor {
                         </span>
                         <span class="question-number">${index + 1}</span>
                         <span class="question-preview">
-                            ${question.text || 'Neue Frage...'}
+                            ${escapeHTML(question.text) || 'Neue Frage...'}
                         </span>
                     </div>
                     <div class="question-actions">
@@ -595,7 +597,7 @@ export class QuizEditor {
                         placeholder="Geben Sie hier Ihre Frage ein..."
                         maxlength="500"
                         onkeyup="window.app.components.editor.updateQuestionText('${question.id}', this.value)"
-                    >${question.text}</textarea>
+                    >${escapeHTML(question.text)}</textarea>
                     <div class="char-counter">
                         <span class="current">${question.text.length}</span>/<span class="max">500</span>
                     </div>
@@ -615,7 +617,7 @@ export class QuizEditor {
                                 type="text" 
                                 class="answer-input" 
                                 placeholder="Antworttext eingeben..."
-                                value="${answer.text}"
+                                value="${escapeHTML(answer.text)}"
                                 onkeyup="window.app.components.editor.updateAnswerText('${question.id}', '${answer.id}', this.value)"
                             >
                             <div class="answer-actions">
@@ -734,7 +736,9 @@ export class QuizEditor {
         if (question) {
             const answer = question.answers.find(a => a.id === answerId);
             if (answer) {
-                answer.text = text;
+                // Basic sanitization for answer text
+                const sanitizedText = text ? text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').trim() : '';
+                answer.text = sanitizedText;
                 this.markAsChanged();
             }
         }
@@ -1009,12 +1013,12 @@ export class QuizEditor {
                 <div class="quiz-preview-body">
                     ${this.currentQuestions.map((question, index) => `
                         <div class="quiz-preview-question">
-                            <h4>Frage ${index + 1}: ${question.text}</h4>
+                            <h4>Frage ${index + 1}: ${escapeHTML(question.text)}</h4>
                             <div class="quiz-preview-answers">
                                 ${question.answers.map((answer, answerIndex) => `
                                     <div class="quiz-preview-answer ${answer.correct ? 'correct' : ''}">
                                         <span class="answer-letter">${String.fromCharCode(65 + answerIndex)}</span>
-                                        <span>${answer.text}</span>
+                                        <span>${escapeHTML(answer.text)}</span>
                                         ${answer.correct ? '<i class="fas fa-check" style="margin-left: auto;"></i>' : ''}
                                     </div>
                                 `).join('')}

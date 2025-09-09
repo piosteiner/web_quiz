@@ -3,6 +3,8 @@
  * Handles quiz metadata, participant management, and basic quiz operations
  */
 
+import { escapeHTML, validateQuizTitle, validateParticipantName } from '../utils/security.js';
+
 export class QuizAdmin {
     constructor(app) {
         this.app = app;
@@ -284,7 +286,7 @@ export class QuizAdmin {
         container.innerHTML = this.quizzes.map(quiz => `
             <div class="quiz-card ${quiz.published ? 'published' : 'draft'}">
                 <div class="quiz-card-header">
-                    <h3 class="quiz-title">${quiz.title}</h3>
+                    <h3 class="quiz-title">${escapeHTML(quiz.title)}</h3>
                     <div class="quiz-status">
                         ${quiz.published 
                             ? '<span class="status-badge published"><i class="fas fa-globe"></i> Veröffentlicht</span>'
@@ -575,7 +577,7 @@ export class QuizAdmin {
                 ${participants.length > 0 ? participants.map((participant, index) => `
                     <div class="participant-item" data-participant-id="${participant.id}">
                         <div class="participant-info">
-                            <span class="participant-name">${participant.name}</span>
+                            <span class="participant-name">${escapeHTML(participant.name)}</span>
                             <span class="participant-status ${participant.status || 'pending'}">${this.getParticipantStatusText(participant.status || 'pending')}</span>
                         </div>
                         <div class="participant-actions">
@@ -611,14 +613,18 @@ export class QuizAdmin {
         const name = nameInput.value.trim();
         const email = emailInput ? emailInput.value.trim() : '';
         
-        if (!name) {
-            this.app.showNotification('Bitte geben Sie einen Namen ein', 'warning');
+        // Validate and sanitize the name
+        const nameValidation = validateParticipantName(name);
+        if (!nameValidation.isValid) {
+            this.app.showNotification(nameValidation.error, 'warning');
             return;
         }
 
+        const sanitizedName = nameValidation.sanitized;
+
         // Check for duplicate names
         const existingParticipant = this.currentQuiz.participants?.find(p => 
-            p.name.toLowerCase() === name.toLowerCase()
+            p.name.toLowerCase() === sanitizedName.toLowerCase()
         );
         
         if (existingParticipant) {
@@ -628,7 +634,7 @@ export class QuizAdmin {
 
         const participant = {
             id: 'participant-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
-            name: name,
+            name: sanitizedName,
             email: email,
             status: 'pending',
             addedAt: new Date().toISOString()
@@ -748,7 +754,14 @@ export class QuizAdmin {
         const newName = prompt('Neuer Name:', participant.name);
         if (!newName || newName.trim() === '') return;
 
-        const trimmedName = newName.trim();
+        // Validate and sanitize the name
+        const validation = validateParticipantName(newName);
+        if (!validation.isValid) {
+            this.app.showNotification(validation.error, 'warning');
+            return;
+        }
+
+        const trimmedName = validation.sanitized;
         
         // Check for duplicate names (excluding current participant)
         const existingParticipant = this.currentQuiz.participants.find(p => 
