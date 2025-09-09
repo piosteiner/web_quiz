@@ -14,10 +14,18 @@ export class QuizAdmin {
         this.currentQuiz = null;
         this.isAuthenticated = false;
         this.autoSaveTimeout = null;
+        this.isInitialized = false;
     }
 
     async init(params = {}) {
         console.log('⚙️ Initializing Quiz Admin');
+        
+        // Prevent multiple initializations
+        if (this.isInitialized) {
+            console.log('Quiz Admin already initialized, skipping...');
+            return;
+        }
+        this.isInitialized = true;
         
         this.setupEventListeners();
         

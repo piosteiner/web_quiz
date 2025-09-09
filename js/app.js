@@ -4,7 +4,7 @@
  */
 
 import CONFIG from './config.js';
-import CloudAPIService from './cloud-api.js?v=1.0.6';
+import CloudAPIService from './cloud-api.js?v=1.0.7';
 import realTimeService from './realtime.js';
 
 class PiGiQuizApp {
@@ -427,6 +427,7 @@ class PiGiQuizApp {
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.PiGiQuizApp = new PiGiQuizApp();
+    window.app = window.PiGiQuizApp; // Add global reference for compatibility
 });
 
 // Export for module use
