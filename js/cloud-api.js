@@ -7,7 +7,10 @@ import CONFIG from './config.js';
 // Custom Error Classes (inline since we don't have the core module yet)
 class APIError extends Error {
     constructor(message, endpoint, originalError) {
-        super(message);
+        super    async getAllQuizzes() {
+        try {
+            const response = await this.get('/quizzes');
+            return Array.isArray(response) ? response : response.quizzes || [];sage);
         this.name = 'APIError';
         this.endpoint = endpoint;
         this.originalError = originalError;
@@ -180,7 +183,7 @@ class CloudAPIService extends APIClient {
      */
     async login(email, password) {
         try {
-            const response = await this.post('/api/auth/login', { email, password });
+            const response = await this.post('/auth/login', { email, password });
             
             this.authToken = response.token;
             this.currentUser = response.user;
@@ -200,12 +203,8 @@ class CloudAPIService extends APIClient {
 
     async register(userData) {
         try {
-            // Validate required fields
-            if (!userData.name || !userData.email || !userData.password) {
-                throw new ValidationError('Name, E-Mail und Passwort sind erforderlich');
-            }
-
-            const response = await this.post('/api/auth/register', userData);
+            this.validateUserData(userData);
+            const response = await this.post('/auth/register', userData);
             
             this.authToken = response.token;
             this.currentUser = response.user;
@@ -231,7 +230,7 @@ class CloudAPIService extends APIClient {
         }
 
         try {
-            const response = await this.get('/api/auth/me');
+            const response = await this.get('/auth/me');
             this.currentUser = response.user;
             this.isAuthenticated = true;
             
@@ -264,7 +263,7 @@ class CloudAPIService extends APIClient {
     async logout() {
         try {
             if (this.authToken) {
-                await this.post('/api/auth/logout');
+                await this.post('/auth/logout');
             }
         } catch (error) {
             console.warn('Logout request failed:', error);
@@ -302,7 +301,7 @@ class CloudAPIService extends APIClient {
     async getQuiz(quizId) {
         try {
             this.validateQuizId(quizId);
-            const response = await this.get(`/api/quizzes/${quizId}`);
+            const response = await this.get(`/quizzes/${quizId}`);
             
             console.log(`✅ Loaded quiz: ${response.title}`);
             return response;
@@ -327,7 +326,7 @@ class CloudAPIService extends APIClient {
                 published: false
             };
 
-            const response = await this.post('/api/quizzes', cleanData);
+            const response = await this.post('/quizzes', cleanData);
             
             console.log(`✅ Created quiz: ${response.title}`);
             return response;
@@ -354,7 +353,7 @@ class CloudAPIService extends APIClient {
                 updatedAt: new Date().toISOString()
             };
 
-            const response = await this.put(`/api/quizzes/${quizId}`, cleanData);
+            const response = await this.put(`/quizzes/${quizId}`, cleanData);
             
             console.log(`✅ Updated quiz: ${response.title}`);
             return response;
@@ -379,7 +378,7 @@ class CloudAPIService extends APIClient {
     async deleteQuiz(quizId) {
         try {
             this.validateQuizId(quizId);
-            await this.delete(`/api/quizzes/${quizId}`);
+            await this.delete(`/quizzes/${quizId}`);
             
             console.log(`✅ Deleted quiz: ${quizId}`);
         } catch (error) {
@@ -396,7 +395,7 @@ class CloudAPIService extends APIClient {
             this.validateQuizId(quizId);
             this.validateParticipantData(participantData);
             
-            const response = await this.post(`/api/quizzes/${quizId}/participants`, participantData);
+            const response = await this.post(`/quizzes/${quizId}/participants`, participantData);
             
             console.log(`✅ Added participant to quiz ${quizId}`);
             return response;
@@ -410,7 +409,7 @@ class CloudAPIService extends APIClient {
         try {
             this.validateQuizId(quizId);
             
-            await this.delete(`/api/quizzes/${quizId}/participants/${participantId}`);
+            await this.delete(`/quizzes/${quizId}/participants/${participantId}`);
             
             console.log(`✅ Removed participant from quiz ${quizId}`);
         } catch (error) {
@@ -529,7 +528,7 @@ class CloudAPIService extends APIClient {
     async createSession(quizId) {
         try {
             this.validateQuizId(quizId);
-            const response = await this.post('/api/sessions', { quizId });
+            const response = await this.post('/sessions', { quizId });
             
             console.log(`✅ Created session for quiz ${quizId}`);
             return response;
@@ -541,7 +540,7 @@ class CloudAPIService extends APIClient {
 
     async getSession(sessionId) {
         try {
-            const response = await this.get(`/api/sessions/${sessionId}`);
+            const response = await this.get(`/sessions/${sessionId}`);
             
             console.log(`✅ Loaded session: ${sessionId}`);
             return response;
