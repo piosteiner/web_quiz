@@ -27,7 +27,9 @@ class PiGiQuizApp {
             join: null,
             admin: null,
             editor: null,
-            live: null
+            live: null,
+            participant: null,
+            participantJoin: null
         };
         
         this.init();
@@ -104,7 +106,12 @@ class PiGiQuizApp {
             queryState[key] = value;
         }
         
-        this.switchToView(route, queryState);
+        // Check for participant join
+        if (urlParams.get('quiz') && urlParams.get('join') === 'true') {
+            this.switchToView('participantJoin', queryState);
+        } else {
+            this.switchToView(route, queryState);
+        }
     }
 
     async switchToView(viewName, params = {}) {
@@ -162,11 +169,37 @@ class PiGiQuizApp {
         try {
             switch (componentName) {
                 case 'join':
-                    if (!this.components.join) {
-                        const { QuizParticipant } = await import('./components/quiz-participant.js');
-                        this.components.join = new QuizParticipant(this);
+                    // Check if this is a participant join request
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('quiz') && urlParams.get('join') === 'true') {
+                        if (!this.components.participantJoin) {
+                            const { ParticipantJoin } = await import('./components/participant-join.js');
+                            this.components.participantJoin = new ParticipantJoin(this);
+                        }
+                        await this.components.participantJoin.init(params);
+                    } else {
+                        if (!this.components.join) {
+                            const { QuizParticipant } = await import('./components/quiz-participant.js');
+                            this.components.join = new QuizParticipant(this);
+                        }
+                        await this.components.join.init(params);
                     }
-                    await this.components.join.init(params);
+                    break;
+                    
+                case 'participantJoin':
+                    if (!this.components.participantJoin) {
+                        const { ParticipantJoin } = await import('./components/participant-join.js');
+                        this.components.participantJoin = new ParticipantJoin(this);
+                    }
+                    await this.components.participantJoin.init(params);
+                    break;
+                    
+                case 'participant':
+                    if (!this.components.participant) {
+                        const { Participant } = await import('./components/participant.js');
+                        this.components.participant = new Participant(this);
+                    }
+                    await this.components.participant.init(params);
                     break;
                     
                 case 'admin':

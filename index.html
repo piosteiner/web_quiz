@@ -358,6 +358,43 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Quiz Information -->
+                                <div class="card quiz-info-section">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="fas fa-info-circle"></i> Quiz Information
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="quiz-info-grid">
+                                            <div class="info-item">
+                                                <label>Quiz-ID</label>
+                                                <div class="info-value">
+                                                    <span id="quiz-id-display">-</span>
+                                                    <button class="btn btn-sm btn-outline" onclick="window.app.components.editor.copyQuizId()" title="Quiz-ID kopieren">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="info-item">
+                                                <label>Erstellt am</label>
+                                                <div class="info-value">
+                                                    <span id="creation-date-display">-</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Participants Section -->
+                                <div class="card participants-section">
+                                    <div class="card-body">
+                                        <div id="participants-list">
+                                            <!-- Participants will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

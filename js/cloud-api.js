@@ -60,6 +60,24 @@ class CloudAPIService {
         }
     }
 
+    async getQuiz(quizId) {
+        try {
+            if (!this.isOnline) {
+                // Try to find in cached quizzes
+                const cachedQuizzes = this.getCachedData('quizzes') || [];
+                return cachedQuizzes.find(q => q.id === quizId) || null;
+            }
+            
+            const quiz = await this.makeRequest(`${CONFIG.ENDPOINTS.QUIZZES}/${quizId}`);
+            return quiz;
+        } catch (error) {
+            console.warn('Failed to fetch quiz from server:', error);
+            // Try cache as fallback
+            const cachedQuizzes = this.getCachedData('quizzes') || [];
+            return cachedQuizzes.find(q => q.id === quizId) || null;
+        }
+    }
+
     async createQuiz(quizData) {
         try {
             if (!this.isOnline) {

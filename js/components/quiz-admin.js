@@ -258,12 +258,18 @@ export class QuizAdmin {
         
         try {
             const response = await this.cloudAPI.getQuizzes();
-            this.quizzes = response.quizzes || [];
+            // Handle both direct array and wrapped response formats
+            this.quizzes = Array.isArray(response) ? response : (response.quizzes || response.data || []);
+            console.log(`✅ Loaded ${this.quizzes.length} quizzes from backend`);
             this.renderQuizList();
         } catch (error) {
-            console.warn('Failed to load quizzes, using local storage:', error);
+            console.warn('Failed to load quizzes from backend, using local storage:', error);
             this.quizzes = JSON.parse(localStorage.getItem('admin-quizzes') || '[]');
             this.renderQuizList();
+            
+            if (this.quizzes.length > 0) {
+                this.app.showNotification(`${this.quizzes.length} lokale Quizzes geladen (Backend nicht verfügbar)`, 'warning');
+            }
         } finally {
             this.app.hideLoading();
         }
@@ -477,23 +483,65 @@ export class QuizAdmin {
     }
 
     async saveQuiz(quiz) {
-        // Save quiz to local storage or API
-        const existingIndex = this.quizzes.findIndex(q => q.id === quiz.id);
-        if (existingIndex >= 0) {
-            this.quizzes[existingIndex] = { ...quiz };
-        } else {
-            this.quizzes.unshift({ ...quiz });
+        this.app.showLoading('Speichere Quiz...');
+        
+        try {
+            let savedQuiz;
+            
+            // Determine if this is a new quiz or an update
+            const isNewQuiz = !quiz.id || quiz.id.startsWith('quiz-');
+            
+            if (isNewQuiz) {
+                // Create new quiz via API
+                savedQuiz = await this.cloudAPI.createQuiz(quiz);
+                console.log('✅ Quiz created in backend:', savedQuiz.id);
+            } else {
+                // Update existing quiz via API
+                savedQuiz = await this.cloudAPI.updateQuiz(quiz.id, quiz);
+                console.log('✅ Quiz updated in backend:', savedQuiz.id);
+            }
+            
+            // Update local quiz list
+            const existingIndex = this.quizzes.findIndex(q => q.id === quiz.id);
+            if (existingIndex >= 0) {
+                this.quizzes[existingIndex] = { ...savedQuiz };
+            } else {
+                this.quizzes.unshift({ ...savedQuiz });
+            }
+            
+            // Save to local storage as backup
+            localStorage.setItem('admin-quizzes', JSON.stringify(this.quizzes));
+            
+            // Refresh quiz list if currently visible
+            if (document.getElementById('quiz-list-view').style.display !== 'none') {
+                this.renderQuizList();
+            }
+            
+            this.app.hideLoading();
+            this.app.showNotification('Quiz erfolgreich gespeichert!', 'success');
+            return savedQuiz;
+            
+        } catch (error) {
+            console.error('Failed to save quiz to backend:', error);
+            
+            // Fallback to local storage only
+            const existingIndex = this.quizzes.findIndex(q => q.id === quiz.id);
+            if (existingIndex >= 0) {
+                this.quizzes[existingIndex] = { ...quiz };
+            } else {
+                this.quizzes.unshift({ ...quiz });
+            }
+            
+            localStorage.setItem('admin-quizzes', JSON.stringify(this.quizzes));
+            
+            if (document.getElementById('quiz-list-view').style.display !== 'none') {
+                this.renderQuizList();
+            }
+            
+            this.app.hideLoading();
+            this.app.showNotification('Quiz lokal gespeichert (Backend nicht verfügbar)', 'warning');
+            return quiz;
         }
-        
-        // Save to local storage as backup
-        localStorage.setItem('admin-quizzes', JSON.stringify(this.quizzes));
-        
-        // Refresh quiz list if currently visible
-        if (document.getElementById('quiz-list-view').style.display !== 'none') {
-            this.renderQuizList();
-        }
-        
-        return quiz;
     }
 
     duplicateQuiz(quizId) {
@@ -560,14 +608,29 @@ export class QuizAdmin {
         this.app.showLoading('Lösche Quiz...');
         
         try {
+            // Try to delete from backend first
+            if (!quizId.startsWith('quiz-')) {
+                await this.cloudAPI.deleteQuiz(quizId);
+                console.log('✅ Quiz deleted from backend:', quizId);
+            }
+            
+            // Remove from local list
             this.quizzes = this.quizzes.filter(q => q.id !== quizId);
             localStorage.setItem('admin-quizzes', JSON.stringify(this.quizzes));
             this.renderQuizList();
-            this.app.showNotification('Quiz gelöscht', 'success');
-        } catch (error) {
-            this.app.showNotification('Fehler beim Löschen: ' + error.message, 'error');
-        } finally {
+            
             this.app.hideLoading();
+            this.app.showNotification('Quiz erfolgreich gelöscht', 'success');
+        } catch (error) {
+            console.error('Failed to delete quiz from backend:', error);
+            
+            // Fallback: delete locally only
+            this.quizzes = this.quizzes.filter(q => q.id !== quizId);
+            localStorage.setItem('admin-quizzes', JSON.stringify(this.quizzes));
+            this.renderQuizList();
+            
+            this.app.hideLoading();
+            this.app.showNotification('Quiz lokal gelöscht (Backend nicht verfügbar)', 'warning');
         }
     }
 }

@@ -117,11 +117,13 @@ export class QuizEditor {
     }
 
     createNewQuizTemplate() {
+        const quizId = this.generateUniqueQuizId();
         return {
-            id: 'quiz-' + Date.now(),
+            id: quizId,
             title: 'Neues Quiz',
             description: '',
             questions: [],
+            participants: [],
             settings: {
                 timePerQuestion: 30,
                 maxParticipants: 50,
@@ -131,6 +133,16 @@ export class QuizEditor {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
+    }
+
+    generateUniqueQuizId() {
+        // Generate a unique 8-character quiz ID
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < 8; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
     }
 
     populateEditor() {
@@ -143,15 +155,328 @@ export class QuizEditor {
         document.getElementById('max-participants').value = this.currentQuiz.settings?.maxParticipants || 50;
         document.getElementById('quiz-category').value = this.currentQuiz.settings?.category || 'general';
         
+        // Populate quiz ID display
+        const quizIdDisplay = document.getElementById('quiz-id-display');
+        if (quizIdDisplay) {
+            quizIdDisplay.textContent = this.currentQuiz.id;
+        }
+        
+        // Populate creation date
+        const creationDateDisplay = document.getElementById('creation-date-display');
+        if (creationDateDisplay && this.currentQuiz.createdAt) {
+            const date = new Date(this.currentQuiz.createdAt);
+            creationDateDisplay.textContent = date.toLocaleDateString('de-DE', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Populate participant list
+        this.renderParticipantList();
+        
         // Update publish button state
         const publishBtn = document.getElementById('publish-quiz');
         if (publishBtn) {
             publishBtn.innerHTML = this.currentQuiz.published 
                 ? '<i class="fas fa-eye-slash"></i> Unveröffentlichen'
-                : '<i class="fas fa-rocket"></i> Veröffentlichen';
+                : '<i class="fas fa-eye"></i> Veröffentlichen';
         }
 
         this.updateQuestionCount();
+    }
+
+    // Participant Management
+    renderParticipantList() {
+        const participantsList = document.getElementById('participants-list');
+        if (!participantsList) return;
+
+        const participants = this.currentQuiz.participants || [];
+        
+        participantsList.innerHTML = `
+            <div class="participants-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-users"></i> Teilnehmer (${participants.length})</h3>
+                    <div class="participant-actions">
+                        <button class="btn btn-secondary" onclick="window.app.components.editor.addParticipant()">
+                            <i class="fas fa-plus"></i> Teilnehmer hinzufügen
+                        </button>
+                        <button class="btn btn-info" onclick="window.app.components.editor.showJoinLink()">
+                            <i class="fas fa-link"></i> Join-Link anzeigen
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="participant-input-section">
+                    <div class="input-group">
+                        <input type="text" 
+                               id="new-participant-name" 
+                               placeholder="Name des Teilnehmers eingeben..."
+                               class="form-control">
+                        <button class="btn btn-primary" onclick="window.app.components.editor.addParticipantFromInput()">
+                            <i class="fas fa-plus"></i> Hinzufügen
+                        </button>
+                    </div>
+                    <div class="bulk-import">
+                        <textarea id="bulk-participants" 
+                                  placeholder="Mehrere Namen eingeben (einen pro Zeile)..."
+                                  class="form-control"
+                                  rows="3"></textarea>
+                        <button class="btn btn-secondary" onclick="window.app.components.editor.addBulkParticipants()">
+                            <i class="fas fa-users"></i> Alle hinzufügen
+                        </button>
+                    </div>
+                </div>
+
+                <div class="participants-list-container">
+                    ${participants.length > 0 ? participants.map((participant, index) => `
+                        <div class="participant-item" data-participant-id="${participant.id}">
+                            <div class="participant-info">
+                                <span class="participant-name">${participant.name}</span>
+                                <span class="participant-status ${participant.status || 'pending'}">${this.getParticipantStatusText(participant.status || 'pending')}</span>
+                            </div>
+                            <div class="participant-actions">
+                                <button class="btn-icon" onclick="window.app.components.editor.editParticipant('${participant.id}')" title="Bearbeiten">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-icon delete-btn" onclick="window.app.components.editor.removeParticipant('${participant.id}')" title="Entfernen">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('') : '<div class="empty-state">Noch keine Teilnehmer hinzugefügt</div>'}
+                </div>
+            </div>
+        `;
+
+        // Add enter key listener for participant input
+        const participantInput = document.getElementById('new-participant-name');
+        if (participantInput) {
+            participantInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.addParticipantFromInput();
+                }
+            });
+        }
+    }
+
+    getParticipantStatusText(status) {
+        const statusTexts = {
+            'pending': 'Wartend',
+            'joined': 'Beigetreten',
+            'active': 'Aktiv',
+            'finished': 'Abgeschlossen'
+        };
+        return statusTexts[status] || 'Unbekannt';
+    }
+
+    addParticipant() {
+        const participantInput = document.getElementById('new-participant-name');
+        if (participantInput) {
+            participantInput.focus();
+        }
+    }
+
+    addParticipantFromInput() {
+        const participantInput = document.getElementById('new-participant-name');
+        if (!participantInput) return;
+
+        const name = participantInput.value.trim();
+        if (!name) {
+            this.app.showNotification('Bitte geben Sie einen Namen ein', 'warning');
+            return;
+        }
+
+        // Check for duplicate names
+        const existingParticipant = this.currentQuiz.participants?.find(p => 
+            p.name.toLowerCase() === name.toLowerCase()
+        );
+        
+        if (existingParticipant) {
+            this.app.showNotification('Ein Teilnehmer mit diesem Namen existiert bereits', 'warning');
+            return;
+        }
+
+        const participant = {
+            id: 'participant-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+            name: name,
+            status: 'pending',
+            addedAt: new Date().toISOString()
+        };
+
+        if (!this.currentQuiz.participants) {
+            this.currentQuiz.participants = [];
+        }
+        
+        this.currentQuiz.participants.push(participant);
+        participantInput.value = '';
+        
+        this.renderParticipantList();
+        this.markAsChanged();
+        this.app.showNotification(`Teilnehmer "${name}" hinzugefügt`, 'success');
+    }
+
+    addBulkParticipants() {
+        const bulkInput = document.getElementById('bulk-participants');
+        if (!bulkInput) return;
+
+        const names = bulkInput.value.split('\n')
+            .map(name => name.trim())
+            .filter(name => name.length > 0);
+
+        if (names.length === 0) {
+            this.app.showNotification('Bitte geben Sie mindestens einen Namen ein', 'warning');
+            return;
+        }
+
+        if (!this.currentQuiz.participants) {
+            this.currentQuiz.participants = [];
+        }
+
+        let addedCount = 0;
+        const duplicates = [];
+
+        names.forEach(name => {
+            // Check for duplicate names
+            const existingParticipant = this.currentQuiz.participants.find(p => 
+                p.name.toLowerCase() === name.toLowerCase()
+            );
+            
+            if (existingParticipant) {
+                duplicates.push(name);
+                return;
+            }
+
+            const participant = {
+                id: 'participant-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                name: name,
+                status: 'pending',
+                addedAt: new Date().toISOString()
+            };
+
+            this.currentQuiz.participants.push(participant);
+            addedCount++;
+        });
+
+        bulkInput.value = '';
+        this.renderParticipantList();
+        this.markAsChanged();
+
+        if (addedCount > 0) {
+            this.app.showNotification(`${addedCount} Teilnehmer hinzugefügt`, 'success');
+        }
+
+        if (duplicates.length > 0) {
+            this.app.showNotification(`Duplikate übersprungen: ${duplicates.join(', ')}`, 'warning');
+        }
+    }
+
+    editParticipant(participantId) {
+        const participant = this.currentQuiz.participants?.find(p => p.id === participantId);
+        if (!participant) return;
+
+        const newName = prompt('Neuer Name:', participant.name);
+        if (!newName || newName.trim() === '') return;
+
+        const trimmedName = newName.trim();
+        
+        // Check for duplicate names (excluding current participant)
+        const existingParticipant = this.currentQuiz.participants.find(p => 
+            p.id !== participantId && p.name.toLowerCase() === trimmedName.toLowerCase()
+        );
+        
+        if (existingParticipant) {
+            this.app.showNotification('Ein Teilnehmer mit diesem Namen existiert bereits', 'warning');
+            return;
+        }
+
+        participant.name = trimmedName;
+        participant.updatedAt = new Date().toISOString();
+        
+        this.renderParticipantList();
+        this.markAsChanged();
+        this.app.showNotification(`Teilnehmer umbenannt in "${trimmedName}"`, 'success');
+    }
+
+    removeParticipant(participantId) {
+        const participant = this.currentQuiz.participants?.find(p => p.id === participantId);
+        if (!participant) return;
+
+        if (!confirm(`Teilnehmer "${participant.name}" wirklich entfernen?`)) {
+            return;
+        }
+
+        this.currentQuiz.participants = this.currentQuiz.participants.filter(p => p.id !== participantId);
+        
+        this.renderParticipantList();
+        this.markAsChanged();
+        this.app.showNotification(`Teilnehmer "${participant.name}" entfernt`, 'success');
+    }
+
+    showJoinLink() {
+        if (!this.currentQuiz.id) {
+            this.app.showNotification('Quiz muss zuerst gespeichert werden', 'warning');
+            return;
+        }
+
+        const baseUrl = window.location.origin + window.location.pathname;
+        const joinUrl = `${baseUrl}?quiz=${this.currentQuiz.id}&join=true`;
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-link"></i> Quiz Join-Link</h3>
+                    <button class="btn-close" onclick="this.closest('.modal-overlay').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Teilen Sie diesen Link mit den Teilnehmern:</p>
+                    <div class="link-container">
+                        <input type="text" value="${joinUrl}" class="form-control" id="join-link-input" readonly>
+                        <button class="btn btn-primary" onclick="window.app.components.editor.copyJoinLink()">
+                            <i class="fas fa-copy"></i> Kopieren
+                        </button>
+                    </div>
+                    <div class="quiz-info">
+                        <p><strong>Quiz-ID:</strong> ${this.currentQuiz.id}</p>
+                        <p><strong>Zugelassene Teilnehmer:</strong> ${this.currentQuiz.participants?.length || 0}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+
+    copyJoinLink() {
+        const linkInput = document.getElementById('join-link-input');
+        if (linkInput) {
+            linkInput.select();
+            document.execCommand('copy');
+            this.app.showNotification('Link in Zwischenablage kopiert', 'success');
+        }
+    }
+
+    copyQuizId() {
+        if (!this.currentQuiz?.id) {
+            this.app.showNotification('Keine Quiz-ID verfügbar', 'warning');
+            return;
+        }
+
+        // Create temporary input element
+        const tempInput = document.createElement('input');
+        tempInput.value = this.currentQuiz.id;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        
+        this.app.showNotification('Quiz-ID in Zwischenablage kopiert', 'success');
     }
 
     markAsChanged() {
