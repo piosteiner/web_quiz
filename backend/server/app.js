@@ -23,12 +23,21 @@ class QuizMasterServer {
         this.server = http.createServer(this.app);
         this.io = socketIo(this.server, {
             cors: {
-                origin: process.env.ALLOWED_ORIGINS?.split(',') || [
-                    "http://localhost:3000", 
-                    "http://localhost:8080",
-                    "https://quiz.piogino.ch",
-                    "https://quiz-backend.piogino.ch"
-                ],
+                origin: function(origin, callback) {
+                    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+                        "http://localhost:3000", 
+                        "http://localhost:8080",
+                        "https://quiz.piogino.ch",
+                        "https://quiz-backend.piogino.ch"
+                    ];
+                    
+                    if (!origin) return callback(null, true);
+                    if (allowedOrigins.includes(origin)) {
+                        return callback(null, true);
+                    } else {
+                        return callback(new Error('Not allowed by CORS'));
+                    }
+                },
                 methods: ["GET", "POST", "PUT", "DELETE"],
                 credentials: true
             }
@@ -55,15 +64,39 @@ class QuizMasterServer {
         }));
         
         // CORS
+        const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+            "http://localhost:3000", 
+            "http://localhost:8080",
+            "https://quiz.piogino.ch",
+            "https://quiz-backend.piogino.ch"
+        ];
+        
         this.app.use(cors({
-            origin: process.env.ALLOWED_ORIGINS?.split(',') || [
-                "http://localhost:3000", 
-                "http://localhost:8080",
-                "https://quiz.piogino.ch",
-                "https://quiz-backend.piogino.ch"
-            ],
-            credentials: true
+            origin: function(origin, callback) {
+                // Allow requests with no origin (like mobile apps, curl, etc.)
+                if (!origin) return callback(null, true);
+                
+                // Check if the origin is in our allowed list
+                if (allowedOrigins.includes(origin)) {
+                    return callback(null, true);
+                } else {
+                    logger.warn(`CORS blocked origin: ${origin}`);
+                    return callback(new Error('Not allowed by CORS'));
+                }
+            },
+            credentials: true,
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
         }));
+        
+        // Handle preflight requests explicitly
+        this.app.options('*', (req, res) => {
+            res.header('Access-Control-Allow-Origin', req.headers.origin);
+            res.header('Access-Control-Allow-Credentials', 'true');
+            res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+            res.sendStatus(200);
+        });
         
         // Compression
         this.app.use(compression());
